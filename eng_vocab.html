@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>英語單字學習簿</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background-color: #f4f7f6;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+        }
+        /* Style the tab */
+        .tab {
+            overflow: hidden;
+            border: 1px solid #ccc;
+            background-color: #e0e0e0;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+        }
+
+        /* Style the buttons inside the tab */
+        .tab button {
+            background-color: inherit;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 24px;
+            transition: 0.3s;
+            font-size: 16px;
+            font-weight: bold;
+            color: #555;
+            border-right: 1px solid #ccc;
+        }
+
+        /* Change background color of buttons on hover */
+        .tab button:hover {
+            background-color: #d5d5d5;
+        }
+
+        /* Create an active/current tablink class */
+        .tab button.active {
+            background-color: #3498db;
+            color: white;
+            border-bottom: none;
+        }
+
+        /* Style the tab content */
+        .tabcontent {
+            display: none;
+            padding: 25px;
+            border: 1px solid #ccc;
+            border-top: none;
+            background-color: white;
+            border-radius: 0 0 8px 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            animation: fadeEffect 1s; /* Fading effect takes 1 second */
+        }
+
+        /* Go from zero to full opacity */
+        @keyframes fadeEffect {
+            from {opacity: 0;}
+            to {opacity: 1;}
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        table, th, td {
+            border: 1px solid #e0e0e0;
+        }
+
+        th, td {
+            padding: 14px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            color: #2c3e50;
+        }
+
+        tr:nth-child(even) {
+            background-color: #fdfdfd;
+        }
+        
+        tr:hover {
+            background-color: #f1f5f9;
+        }
+        
+        .word {
+            color: #2980b9;
+            font-size: 1.1em;
+        }
+
+        .tips {
+            background-color: #e8f4fd;
+            border-left: 6px solid #3498db;
+            margin-top: 25px;
+            padding: 15px 20px;
+            border-radius: 4px;
+        }
+        
+        .tips ul {
+            margin-bottom: 0;
+        }
+
+        .speak-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1em;
+            padding: 2px 6px;
+            margin-left: 8px;
+            border-radius: 50%;
+            transition: background-color 0.2s, transform 0.1s;
+            outline: none;
+        }
+        .speak-btn:hover {
+            background-color: #d5d5d5;
+            transform: scale(1.1);
+        }
+        .speak-btn:active {
+            transform: scale(0.9);
+        }
+        .memory-card {
+            background-color: #34495e;
+            color: #34495e;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+            padding: 10px;
+            line-height: 1.2;
+        }
+        .memory-card.flipped {
+            background-color: #ecf0f1;
+            color: #2c3e50;
+            border: 2px solid #bdc3c7;
+        }
+        .memory-card.matched {
+            background-color: #d5f5e3;
+            color: #27ae60;
+            border: 2px solid #2ecc71;
+            cursor: default;
+            box-shadow: none;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>📚 英語單字學習簿</h1>
+
+    <div class="tab">
+        <button class="tablinks active" onclick="openTab(event, 'Date-20260918')">📅 2026/9/18</button>
+        <button class="tablinks" onclick="openTab(event, 'Date-20260919')">📅 2026/9/19</button>
+        <button class="tablinks" style="color: #e67e22; font-weight: bold;" onclick="openTab(event, 'QuizTab')">📝 自我測驗</button>
+        <button class="tablinks" style="color: #8e44ad; font-weight: bold;" onclick="openTab(event, 'GameTab')">🎮 翻牌遊戲</button>
+        <!-- 未來可以新增更多分頁，只需在此加入新的 button 即可 -->
+        <button class="tablinks" onclick="openTab(event, 'NewTabTemplate')">➕ 新增日期</button>
+    </div>
+
+    <!-- 2026/9/18 分頁內容 -->
+    <div id="Date-20260918" class="tabcontent" style="display: block;">
+        <h2>單字清單</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>單字</th>
+                    <th>詞性</th>
+                    <th>中文意思</th>
+                    <th>例句 (Example)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><strong class="word">computer</strong><br><span style="color:#7f8c8d; font-size:0.9em;">[kəmˋpjutɚ]</span></td><td>n.</td><td>電腦</td><td>I bought a new <strong>computer</strong>. (我買了一台新電腦。)</td></tr>
+                <tr><td><strong class="word">complain</strong><br><span style="color:#7f8c8d; font-size:0.9em;">[kəmˋplen]</span></td><td>v.</td><td>抱怨</td><td>She always <strong>complains</strong> about the weather. (她總是抱怨天氣。)</td></tr>
+                <tr><td><strong class="word">command</strong><br><span style="color:#7f8c8d; font-size:0.9em;">[kəˋmænd]</span></td><td>v./n.</td><td>命令、指揮</td><td>He gave a <strong>command</strong> to stop. (他下令停止。)</td></tr>
+                <tr><td><strong class="word">comment</strong><br><span style="color:#7f8c8d; font-size:0.9em;">[ˋkɑmɛnt]</span></td><td>n./v.</td><td>評論、註解</td><td>Please leave a <strong>comment</strong> below. (請在下方留言。)</td></tr>
+                <tr><td><strong class="word">complete</strong><br><span style="color:#7f8c8d; font-size:0.9em;">[kəmˋplit]</span></td><td>v./adj.</td><td>完成、完整的</td><td>I need to <strong>complete</strong> my homework. (我需要完成我的功課。)</td></tr>
+                <tr><td><strong class="word">compare</strong><br><span style="color:#7f8c8d; font-size:0.9em;">[kəmˋpɛr]</span></td><td>v.</td><td>比較</td><td>If you <strong>compare</strong> the two, this one is better. (如果你比較這兩個，這個比較好。)</td></tr>
+                <tr><td><strong class="word">company</strong><br><span style="color:#7f8c8d; font-size:0.9em;">[ˋkʌmpənɪ]</span></td><td>n.</td><td>公司、陪伴</td><td>He works for a big <strong>company</strong>. (他在一家大公司工作。)</td></tr>
+                <tr><td><strong class="word">minute</strong><br><span style="color:#7f8c8d; font-size:0.9em;">[ˋmɪnɪt]</span></td><td>n.</td><td>分鐘</td><td>Give me a <strong>minute</strong>. (給我一分鐘。)</td></tr>
+                <tr><td><strong class="word">minor</strong><br><span style="color:#7f8c8d; font-size:0.9em;">[ˋmaɪnɚ]</span></td><td>adj.</td><td>次要的、較小的</td><td>It's just a <strong>minor</strong> problem. (這只是一個小問題。)</td></tr>
+                <tr><td><strong class="word">minus</strong><br><span style="color:#7f8c8d; font-size:0.9em;">[ˋmaɪnəs]</span></td><td>prep./n./adj.</td><td>減去、負的</td><td>Five <strong>minus</strong> two is three. (五減二等於三。)</td></tr>
+            </tbody>
+        </table>
+
+        <div class="story" style="margin-top: 25px; padding: 20px; background-color: #fff9e6; border-left: 6px solid #f39c12; border-radius: 4px;">
+            <h3 style="margin-top: 0; color: #d35400;">📖 短文閱讀練習</h3>
+            <p style="line-height: 1.6; font-size: 1.1em; color: #444;">
+                Yesterday, I bought a new <strong style="color: #d35400;">computer</strong> for my <strong style="color: #d35400;">company</strong>. However, I had to <strong style="color: #d35400;">complain</strong> because it was missing a <strong style="color: #d35400;">minor</strong> cable. The store manager gave a <strong style="color: #d35400;">command</strong> to his staff to fix the problem in one <strong style="color: #d35400;">minute</strong>. He left a <strong style="color: #d35400;">comment</strong> on my receipt and gave me a <strong style="color: #d35400;">complete</strong> refund for the shipping fee, <strong style="color: #d35400;">minus</strong> the tax. When I <strong style="color: #d35400;">compare</strong> this store to others, their service is actually very good!
+            </p>
+            <hr style="border: 0; border-top: 1px dashed #ccc; margin: 15px 0;">
+            <p style="margin-bottom: 0; font-size: 0.95em; color: #666; line-height: 1.5;">
+                <strong>💡 中文翻譯參考：</strong><br>
+                昨天，我為我的<strong>公司 (company)</strong> 買了一台新<strong>電腦 (computer)</strong>。然而，我不得不<strong>抱怨 (complain)</strong>，因為它少了一條<strong>次要的 (minor)</strong> 纜線。店長下達<strong>命令 (command)</strong>，要求他的員工在一<strong>分鐘 (minute)</strong> 內解決這個問題。他在我的收據上留下了<strong>評論 (comment)</strong>，並給了我<strong>完整的 (complete)</strong> 運費退款，<strong>減去 (minus)</strong> 稅金。當我把這家店與其他店<strong>比較 (compare)</strong> 時，他們的服務其實非常好！
+            </p>
+        </div>
+
+        <div class="analysis" style="margin-top: 25px; padding: 20px; background-color: #f4fdf8; border-left: 6px solid #2ecc71; border-radius: 4px;">
+            <h3 style="margin-top: 0; color: #27ae60;">🔍 字根字首字尾歸納</h3>
+            <p style="color: #444; line-height: 1.6;">這組單字非常精彩！前 7 個單字全都是 <strong>com-</strong> 開頭，而後 3 個單字全都是 <strong>min-</strong> 開頭。掌握這兩個字首/字根，這 10 個單字就能一次記起來！</p>
+            
+            <h4 style="color: #2c3e50; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-top: 20px;">1. 字首 com- (一起、共同、完全)</h4>
+            <ul style="line-height: 1.6; color: #444;">
+                <li><strong>com</strong>puter (<strong>com</strong> 一起 + put 計算 ➔ 一起計算 ➔ <strong>電腦</strong>)</li>
+                <li><strong>com</strong>plain (<strong>com</strong> 徹底 + plain 捶胸頓足 ➔ 徹底表達不滿 ➔ <strong>抱怨</strong>)</li>
+                <li><strong>com</strong>mand (<strong>com</strong> 強調 + mand 委託/命令 ➔ <strong>命令、指揮</strong>)</li>
+                <li><strong>com</strong>ment (<strong>com</strong> 一起 + ment 心智 ➔ 一起動腦思考並表達 ➔ <strong>評論</strong>)</li>
+                <li><strong>com</strong>plete (<strong>com</strong> 完全 + plete 滿 ➔ 完全裝滿 ➔ <strong>完成、完整的</strong>)</li>
+                <li><strong>com</strong>pare (<strong>com</strong> 一起 + pare 平等 ➔ 放在一起看是否平等 ➔ <strong>比較</strong>)</li>
+                <li><strong>com</strong>pany (<strong>com</strong> 一起 + pan 麵包 ➔ 一起吃麵包的人 ➔ <strong>陪伴、公司</strong>)</li>
+            </ul>
+
+            <h4 style="color: #2c3e50; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-top: 20px;">2. 字根 min- (小、少)</h4>
+            <ul style="line-height: 1.6; color: #444;">
+                <li><strong>min</strong>ute (小部分 ➔ <strong>分鐘</strong>；💡 <em>補充：發音為 [maɪˋnjut] 時當形容詞，意思是「微小的」</em>)</li>
+                <li><strong>min</strong>or (<strong>較小的、次要的</strong>)</li>
+                <li><strong>min</strong>us (較少的 ➔ <strong>減去、負的</strong>)</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 2026/9/19 分頁內容 -->
+    <div id="Date-20260919" class="tabcontent">
+        <h2>單字清單</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>單字</th>
+                    <th>詞性</th>
+                    <th>中文意思</th>
+                    <th>例句 (Example)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong class="word">include</strong><br><span style="color:#7f8c8d; font-size:0.9em;">[ɪnˋklud]</span></td>
+                    <td>v.</td>
+                    <td>包含、包括</td>
+                    <td>The price <strong>includes</strong> breakfast. (價格包含早餐。)</td>
+                </tr>
+                <tr>
+                    <td><strong class="word">improve</strong><br><span style="color:#7f8c8d; font-size:0.9em;">[ɪmˋpruv]</span></td>
+                    <td>v.</td>
+                    <td>改善、提高</td>
+                    <td>I want to <strong>improve</strong> my English. (我想提升我的英文。)</td>
+                </tr>
+                <tr>
+                    <td><strong class="word">problem</strong><br><span style="color:#7f8c8d; font-size:0.9em;">[ˋprɑbləm]</span></td>
+                    <td>n.</td>
+                    <td>問題、難題</td>
+                    <td>We need to solve this <strong>problem</strong>. (我們需要解決這個問題。)</td>
+                </tr>
+                <tr>
+                    <td><strong class="word">promise</strong><br><span style="color:#7f8c8d; font-size:0.9em;">[ˋprɑmɪs]</span></td>
+                    <td>v./n.</td>
+                    <td>承諾、保證</td>
+                    <td>I <strong>promise</strong> I won't tell anyone. (我保證不告訴任何人。)</td>
+                </tr>
+                <tr>
+                    <td><strong class="word">pronounce</strong><br><span style="color:#7f8c8d; font-size:0.9em;">[prəˋnaʊns]</span></td>
+                    <td>v.</td>
+                    <td>發音</td>
+                    <td>How do you <strong>pronounce</strong> this word? (這個單字怎麼發音？)</td>
+                </tr>
+                <tr>
+                    <td><strong class="word">emphasize</strong><br><span style="color:#7f8c8d; font-size:0.9em;">[ˋɛmfə͵saɪz]</span></td>
+                    <td>v.</td>
+                    <td>強調</td>
+                    <td>He <strong>emphasized</strong> the importance of health. (他強調了健康的重要性。)</td>
+                </tr>
+                <tr>
+                    <td><strong class="word">realize</strong><br><span style="color:#7f8c8d; font-size:0.9em;">[ˋrɪə͵laɪz]</span></td>
+                    <td>v.</td>
+                    <td>意識到、實現</td>
+                    <td>I didn't <strong>realize</strong> you were here. (我沒意識到你在這裡。)</td>
+                </tr>
+                <tr>
+                    <td><strong class="word">apologize</strong><br><span style="color:#7f8c8d; font-size:0.9em;">[əˋpɑlə͵dʒaɪz]</span></td>
+                    <td>v.</td>
+                    <td>道歉</td>
+                    <td>I <strong>apologize</strong> for my mistake. (我為我的錯誤道歉。)</td>
+                </tr>
+                <tr>
+                    <td><strong class="word">famous</strong><br><span style="color:#7f8c8d; font-size:0.9em;">[ˋfeməs]</span></td>
+                    <td>adj.</td>
+                    <td>著名的</td>
+                    <td>She is a <strong>famous</strong> writer. (她是一位著名的作家。)</td>
+                </tr>
+                <tr>
+                    <td><strong class="word">delicious</strong><br><span style="color:#7f8c8d; font-size:0.9em;">[dɪˋlɪʃəs]</span></td>
+                    <td>adj.</td>
+                    <td>美味的</td>
+                    <td>This cake is very <strong>delicious</strong>. (這塊蛋糕非常美味。)</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="story" style="margin-top: 25px; padding: 20px; background-color: #fff9e6; border-left: 6px solid #f39c12; border-radius: 4px;">
+            <h3 style="margin-top: 0; color: #d35400;">📖 短文閱讀練習</h3>
+            <p style="line-height: 1.6; font-size: 1.1em; color: #444;">
+                My biggest dream is to open a restaurant. To achieve this, I know I must <strong style="color: #d35400;">improve</strong> my cooking skills every day. Yesterday, I tried to make a new cake. I really wanted it to be <strong style="color: #d35400;">delicious</strong>, but there was a big <strong style="color: #d35400;">problem</strong>. I baked it for too long, and it tasted terrible! I had to <strong style="color: #d35400;">apologize</strong> to my family for the bad dessert.
+            </p>
+            <p style="line-height: 1.6; font-size: 1.1em; color: #444;">
+                I didn't <strong style="color: #d35400;">realize</strong> that baking could be so difficult. My family smiled and said it was okay. My mother decided to <strong style="color: #d35400;">emphasize</strong> the importance of practicing. She said, "Next time, make sure your recipe will <strong style="color: #d35400;">include</strong> more fresh fruits."
+            </p>
+            <p style="line-height: 1.6; font-size: 1.1em; color: #444;">
+                I also want to learn how to <strong style="color: #d35400;">pronounce</strong> difficult French food names perfectly, because I want my restaurant to be a <strong style="color: #d35400;">famous</strong> French cafe in our city. I <strong style="color: #d35400;">promise</strong> to work very hard and learn from my mistakes.
+            </p>
+            <hr style="border: 0; border-top: 1px dashed #ccc; margin: 15px 0;">
+            <p style="margin-bottom: 0; font-size: 0.95em; color: #666; line-height: 1.5;">
+                <strong>💡 中文翻譯參考：</strong><br>
+                我最大的夢想是開一間餐廳。為了實現這個目標，我知道我必須每天<strong>改善（improve）</strong>我的廚藝。昨天，我試著做了一個新蛋糕。我非常希望它很<strong>美味（delicious）</strong>，但是遇到了一個大<strong>問題（problem）</strong>。我烤太久了，吃起來糟透了！我只好為這個難吃的甜點向我的家人<strong>道歉（apologize）</strong>。<br><br>
+                我沒<strong>意識到（realize）</strong>烘焙會這麼困難。我的家人微笑著說沒關係。我媽媽決定<strong>強調（emphasize）</strong>練習的重要性。她說：「下次，確保你的食譜會<strong>包含（include）</strong>更多新鮮水果。」<br><br>
+                我也想學會如何完美地<strong>發音（pronounce）</strong>困難的法國食物名稱，因為我希望我的餐廳成為我們城市裡一家<strong>著名的（famous）</strong>法式咖啡館。我<strong>承諾（promise）</strong>會非常努力並從錯誤中學習。
+            </p>
+            <hr style="border: 0; border-top: 1px dashed #ccc; margin: 15px 0;">
+            <div style="font-size: 0.95em; color: #555;">
+                <strong>📝 延伸單字註解（文章內出現的其他實用單字）：</strong>
+                <ul style="margin-top: 8px; margin-bottom: 0; padding-left: 20px; line-height: 1.6;">
+                    <li><strong>achieve</strong> [əˋtʃiv] (v.) 實現、達成 (片語：achieve a goal 達成目標)</li>
+                    <li><strong>dessert</strong> [dɪˋzɝt] (n.) 甜點 (💡 記憶小訣竅：甜點很甜所以有兩個 s (Sweet Sweet)，和 desert 沙漠區別)</li>
+                    <li><strong>practicing</strong> (v.-ing / n.) 練習 (動詞 practice 去 e 加上 -ing)</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="analysis" style="margin-top: 25px; padding: 20px; background-color: #f4fdf8; border-left: 6px solid #2ecc71; border-radius: 4px;">
+            <h3 style="margin-top: 0; color: #27ae60;">🔍 字根字首字尾歸納</h3>
+            <p style="color: #444; line-height: 1.6;">這份單字清單非常有意思，在<strong>字首 (Prefix)</strong> 和 <strong>字尾 (Suffix)</strong> 上有著非常規律的共通點。掌握這些造字邏輯，就能像拼圖一樣輕鬆記住它們！</p>
+            
+            <h4 style="color: #2c3e50; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-top: 20px;">1. 共通的字尾 (Suffix)：決定詞性</h4>
+            <ul style="line-height: 1.6; color: #444;">
+                <li><strong>-ize (動詞字尾：使成為...、化)</strong>
+                    <ul>
+                        <li>real (真實的) + <strong>ize</strong> ➔ <strong>realize</strong> (使成真 ➔ 意識到、實現)</li>
+                        <li>apology (歉意) + <strong>ize</strong> ➔ <strong>apologize</strong> (表達歉意 ➔ 道歉)</li>
+                        <li>emphasis (強調，名詞) + <strong>ize</strong> ➔ <strong>emphasize</strong> (使之被強調 ➔ 強調)</li>
+                    </ul>
+                </li>
+                <li style="margin-top: 8px;"><strong>-ous / -ious (形容詞字尾：充滿...的、有...特質的)</strong>
+                    <ul>
+                        <li>fame (名聲) + <strong>ous</strong> ➔ <strong>famous</strong> (充滿名聲的 ➔ 著名的)</li>
+                        <li>delice (愉悅/誘惑) + <strong>ious</strong> ➔ <strong>delicious</strong> (充滿愉悅的 ➔ 美味的)</li>
+                    </ul>
+                </li>
+            </ul>
+
+            <h4 style="color: #2c3e50; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-top: 20px;">2. 共通的字首 (Prefix)：決定方向與狀態</h4>
+            <ul style="line-height: 1.6; color: #444;">
+                <li><strong>pro- (向前、在前、公開)</strong>
+                    <ul>
+                        <li><strong>pro</strong>mise (<strong>pro</strong> 向前 + mise 丟/送 ➔ 把話先說出去 ➔ 承諾)</li>
+                        <li><strong>pro</strong>nounce (<strong>pro</strong> 公開 + nounce 呼喊/報告 ➔ 大聲唸出來 ➔ 發音)</li>
+                        <li><strong>pro</strong>blem (<strong>pro</strong> 向前 + blem 丟 ➔ 被丟在前面的障礙物 ➔ 問題)</li>
+                    </ul>
+                </li>
+                <li style="margin-top: 8px;"><strong>in- / im- / em- (進入、在內、使...)</strong> 💡 <em>這三個字首是同源的，會因為後方字母的發音而改變拼法。</em>
+                    <ul>
+                        <li><strong>in</strong>clude (<strong>in</strong> 進入 + clude 關閉 ➔ 關在裡面 ➔ 包含)</li>
+                        <li><strong>im</strong>prove (<strong>im</strong> 進入/使 + prove 價值 ➔ 使其產生價值 ➔ 改善)</li>
+                        <li><strong>em</strong>phasize (<strong>em</strong> 進入/使 + phas 顯現 ➔ 使重點顯現 ➔ 強調)</li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 測驗分頁內容 -->
+    <div id="QuizTab" class="tabcontent">
+        <h2>📝 綜合自我測驗</h2>
+        <p>測試看看這幾天學的單字您記住了多少！(共 20 字)</p>
+        
+        <div style="margin-top: 15px; margin-bottom: 20px;">
+            <button id="mode-mc-btn" onclick="setQuizMode('mc')" style="padding: 10px 20px; font-size: 1.1em; background-color: #34495e; color: white; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px;">🔠 選擇題模式</button>
+            <button id="mode-dict-btn" onclick="setQuizMode('dict')" style="padding: 10px 20px; font-size: 1.1em; background-color: #bdc3c7; color: #333; border: none; border-radius: 5px; cursor: pointer;">🎧 聽寫模式</button>
+        </div>
+        
+        <div id="quiz-container" style="background: #fff; padding: 25px; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+            <div id="quiz-question" style="font-size: 1.4em; font-weight: bold; margin-bottom: 20px; color: #2c3e50;">準備好了嗎？請點擊下方按鈕開始！</div>
+            <div id="quiz-options" style="display: flex; flex-direction: column; gap: 12px;">
+                <!-- 選項會動態產生在這裡 -->
+            </div>
+            <button id="start-quiz-btn" onclick="startQuiz()" style="padding: 12px 24px; font-size: 1.1em; background-color: #e67e22; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 25px; font-weight: bold; transition: background-color 0.3s;">🚀 開始測驗</button>
+            <div id="quiz-result" style="margin-top: 20px; font-weight: bold; font-size: 1.3em; min-height: 30px;"></div>
+        </div>
+    </div>
+
+    <!-- 翻牌遊戲分頁內容 -->
+    <div id="GameTab" class="tabcontent">
+        <h2>🃏 單字翻牌記憶遊戲</h2>
+        <p>點擊卡片翻開，將「英文單字」與對應的「中文意思」配對成功即可消除！</p>
+        <div style="margin-bottom: 20px;">
+            <button onclick="initGame()" style="padding: 10px 20px; font-size: 1.1em; background-color: #8e44ad; color: white; border: none; border-radius: 5px; cursor: pointer;">🔄 開始 / 重新洗牌</button>
+            <span id="game-status" style="margin-left: 15px; font-weight: bold; font-size: 1.2em; color: #2c3e50;">點擊按鈕開始遊戲！</span>
+        </div>
+        <div id="game-board" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; max-width: 600px; margin: 0 auto; background: #ecf0f1; padding: 15px; border-radius: 8px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);">
+            <!-- 卡片會動態生成於此 -->
+        </div>
+    </div>
+
+    <!-- 範例空白分頁，供未來參考擴充 -->
+    <div id="NewTabTemplate" class="tabcontent">
+        <h2>此處為未來的單字清單保留</h2>
+        <p>當您有新日期的單字需要記憶時，可以複製 HTML 結構並在此建立新的表格。</p>
+    </div>
+
+    <script>
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            
+            // 隱藏所有分頁內容
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            
+            // 移除所有分頁按鈕的 active 狀態
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            
+            // 顯示目前點擊的分頁內容，並將按鈕設為 active
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+
+        // 尋找並設定英文女聲
+        let englishFemaleVoice = null;
+        function loadVoices() {
+            let voices = window.speechSynthesis.getVoices();
+            // 嘗試尋找常見的微軟(Windows/Edge)或Google(Chrome)女聲名稱
+            englishFemaleVoice = voices.find(v => 
+                v.lang.startsWith('en') && 
+                (v.name.includes('Zira') || v.name.includes('Jenny') || 
+                 v.name.includes('Aria') || v.name.includes('Samantha') || 
+                 v.name.includes('Google US English') || v.name.includes('Female'))
+            );
+            // 若真的找不到帶有上述特徵的，就至少抓第一個英文語音 (以防萬一)
+            if (!englishFemaleVoice) {
+                englishFemaleVoice = voices.find(v => v.lang.startsWith('en'));
+            }
+        }
+        
+        // 由於語音清單通常是異步載入的，當系統語音載入完成時會觸發此事件
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = loadVoices;
+        }
+
+        // 在頁面載入後自動為所有單字加上發音按鈕
+        document.addEventListener('DOMContentLoaded', function() {
+            // 頁面初次載入時也嘗試抓取一次 (某些瀏覽器可能不觸發 onvoiceschanged)
+            loadVoices();
+
+            var words = document.querySelectorAll('strong.word');
+            words.forEach(function(el) {
+                var wordText = el.innerText.trim();
+                var btn = document.createElement('button');
+                btn.className = 'speak-btn';
+                btn.innerHTML = '🔊';
+                btn.title = '聆聽發音 (女聲)';
+                btn.onclick = function() {
+                    if ('speechSynthesis' in window) {
+                        var utterance = new SpeechSynthesisUtterance(wordText);
+                        utterance.lang = 'en-US';
+                        utterance.rate = 0.9; // 稍微放慢語速，聽得更清楚
+                        
+                        // 指定為女聲
+                        if (englishFemaleVoice) {
+                            utterance.voice = englishFemaleVoice;
+                        }
+                        
+                        window.speechSynthesis.speak(utterance);
+                    } else {
+                        alert('您的瀏覽器不支援語音發音功能。');
+                    }
+                };
+                // 將按鈕插入到單字元素的正後方
+                el.parentNode.insertBefore(btn, el.nextSibling);
+            });
+        });
+
+        // 測驗功能邏輯
+        const wordList = [
+            { en: "computer", zh: "電腦" }, { en: "complain", zh: "抱怨" },
+            { en: "command", zh: "命令、指揮" }, { en: "comment", zh: "評論、註解" },
+            { en: "complete", zh: "完成、完整的" }, { en: "compare", zh: "比較" },
+            { en: "company", zh: "公司、陪伴" }, { en: "minute", zh: "分鐘" },
+            { en: "minor", zh: "次要的、較小的" }, { en: "minus", zh: "減去、負的" },
+            { en: "include", zh: "包含、包括" }, { en: "improve", zh: "改善、提高" },
+            { en: "problem", zh: "問題、難題" }, { en: "promise", zh: "承諾、保證" },
+            { en: "pronounce", zh: "發音" }, { en: "emphasize", zh: "強調" },
+            { en: "realize", zh: "意識到、實現" }, { en: "apologize", zh: "道歉" },
+            { en: "famous", zh: "著名的" }, { en: "delicious", zh: "美味的" }
+        ];
+
+        let currentQuestion = {};
+        let currentQuizMode = 'mc'; // 'mc' for multiple choice, 'dict' for dictation
+
+        function setQuizMode(mode) {
+            currentQuizMode = mode;
+            
+            // 更新按鈕樣式
+            if (mode === 'mc') {
+                document.getElementById('mode-mc-btn').style.backgroundColor = '#34495e';
+                document.getElementById('mode-mc-btn').style.color = 'white';
+                document.getElementById('mode-dict-btn').style.backgroundColor = '#bdc3c7';
+                document.getElementById('mode-dict-btn').style.color = '#333';
+            } else {
+                document.getElementById('mode-dict-btn').style.backgroundColor = '#34495e';
+                document.getElementById('mode-dict-btn').style.color = 'white';
+                document.getElementById('mode-mc-btn').style.backgroundColor = '#bdc3c7';
+                document.getElementById('mode-mc-btn').style.color = '#333';
+            }
+            
+            // 重置測驗畫面
+            document.getElementById('quiz-options').innerHTML = '';
+            document.getElementById('quiz-result').innerText = '';
+            document.getElementById('quiz-question').innerText = "準備好了嗎？請點擊下方按鈕開始！";
+            document.getElementById('start-quiz-btn').innerText = "🚀 開始測驗";
+            document.getElementById('start-quiz-btn').style.backgroundColor = "#e67e22";
+        }
+
+        function startQuiz() {
+            document.getElementById('start-quiz-btn').innerText = "下一題";
+            document.getElementById('start-quiz-btn').style.backgroundColor = "#3498db";
+            generateQuestion();
+        }
+
+        function generateQuestion() {
+            const optionsContainer = document.getElementById('quiz-options');
+            optionsContainer.innerHTML = '';
+            document.getElementById('quiz-result').innerText = '';
+
+            // 隨機選一個題目
+            const qIndex = Math.floor(Math.random() * wordList.length);
+            currentQuestion = wordList[qIndex];
+            
+            if (currentQuizMode === 'mc') {
+                // 決定是英翻中還是中翻英 (50% 機率)
+                const isEnToZh = Math.random() > 0.5;
+                if (isEnToZh) {
+                    document.getElementById('quiz-question').innerText = currentQuestion.en + " 的中文意思是？";
+                    generateMultipleChoice(true);
+                } else {
+                    document.getElementById('quiz-question').innerText = currentQuestion.zh + " 的英文是？";
+                    generateMultipleChoice(false);
+                }
+            } else {
+                document.getElementById('quiz-question').innerText = "🎧 請聽發音並拼出正確的英文單字：";
+                generateDictation();
+            }
+        }
+
+        function generateMultipleChoice(isEnToZh) {
+            const optionsContainer = document.getElementById('quiz-options');
+            let options = [currentQuestion];
+            while (options.length < 4) {
+                let randomOpt = wordList[Math.floor(Math.random() * wordList.length)];
+                if (!options.includes(randomOpt)) {
+                    options.push(randomOpt);
+                }
+            }
+            options.sort(() => Math.random() - 0.5);
+
+            options.forEach(opt => {
+                let btn = document.createElement('button');
+                btn.style.padding = "15px";
+                btn.style.fontSize = "1.2em";
+                btn.style.border = "1px solid #ccc";
+                btn.style.borderRadius = "8px";
+                btn.style.backgroundColor = "#f9f9f9";
+                btn.style.cursor = "pointer";
+                btn.style.textAlign = "left";
+                btn.style.transition = "background-color 0.2s";
+                
+                btn.innerText = isEnToZh ? opt.zh : opt.en;
+                
+                btn.onmouseover = function() { if (!this.disabled) this.style.backgroundColor = "#e0e0e0"; };
+                btn.onmouseout = function() { if (!this.disabled) this.style.backgroundColor = "#f9f9f9"; };
+                
+                btn.onclick = function() {
+                    checkAnswer(opt, currentQuestion, this);
+                };
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function generateDictation() {
+            const optionsContainer = document.getElementById('quiz-options');
+            
+            // 播放發音按鈕
+            let playBtn = document.createElement('button');
+            playBtn.innerText = '🔊 播放 / 重播發音';
+            playBtn.style.padding = "12px";
+            playBtn.style.fontSize = "1.2em";
+            playBtn.style.backgroundColor = "#3498db";
+            playBtn.style.color = "white";
+            playBtn.style.border = "none";
+            playBtn.style.borderRadius = "8px";
+            playBtn.style.cursor = "pointer";
+            playBtn.style.marginBottom = "15px";
+            playBtn.onclick = playCurrentWord;
+            optionsContainer.appendChild(playBtn);
+
+            // 拼字輸入框
+            let inputField = document.createElement('input');
+            inputField.type = "text";
+            inputField.id = "dictation-input";
+            inputField.placeholder = "請輸入英文單字...";
+            inputField.style.padding = "15px";
+            inputField.style.fontSize = "1.2em";
+            inputField.style.border = "2px solid #ccc";
+            inputField.style.borderRadius = "8px";
+            inputField.style.marginBottom = "15px";
+            inputField.autocomplete = "off";
+            inputField.onkeypress = function(e) {
+                if (e.key === 'Enter') checkDictation();
+            };
+            optionsContainer.appendChild(inputField);
+
+            // 送出按鈕
+            let submitBtn = document.createElement('button');
+            submitBtn.innerText = '✅ 送出答案';
+            submitBtn.style.padding = "12px";
+            submitBtn.style.fontSize = "1.2em";
+            submitBtn.style.backgroundColor = "#2ecc71";
+            submitBtn.style.color = "white";
+            submitBtn.style.border = "none";
+            submitBtn.style.borderRadius = "8px";
+            submitBtn.style.cursor = "pointer";
+            submitBtn.onclick = checkDictation;
+            optionsContainer.appendChild(submitBtn);
+
+            // 延遲播放發音與 focus (確保畫面渲染完畢)
+            setTimeout(playCurrentWord, 300);
+            setTimeout(() => inputField.focus(), 300);
+        }
+
+        function playCurrentWord() {
+            if ('speechSynthesis' in window) {
+                var utterance = new SpeechSynthesisUtterance(currentQuestion.en);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.9;
+                if (englishFemaleVoice) {
+                    utterance.voice = englishFemaleVoice;
+                }
+                window.speechSynthesis.speak(utterance);
+            } else {
+                alert('您的瀏覽器不支援語音發音功能。');
+            }
+        }
+
+        function checkDictation() {
+            const inputField = document.getElementById('dictation-input');
+            if(!inputField) return;
+            const userAnswer = inputField.value.trim().toLowerCase();
+            const resultDiv = document.getElementById('quiz-result');
+            
+            inputField.disabled = true;
+            
+            if (userAnswer === currentQuestion.en.toLowerCase()) {
+                resultDiv.innerText = "✅ 拼寫正確！";
+                resultDiv.style.color = "#27ae60";
+                inputField.style.borderColor = "#2ecc71";
+                inputField.style.backgroundColor = "#d5f5e3";
+            } else {
+                resultDiv.innerText = `❌ 拼錯了！正確拼法是：${currentQuestion.en} (${currentQuestion.zh})`;
+                resultDiv.style.color = "#c0392b";
+                inputField.style.borderColor = "#e74c3c";
+                inputField.style.backgroundColor = "#fadbd8";
+            }
+        }
+
+        function checkAnswer(selected, correct, btnEl) {
+            const resultDiv = document.getElementById('quiz-result');
+            // 禁用所有按鈕
+            const buttons = document.getElementById('quiz-options').querySelectorAll('button');
+            buttons.forEach(b => {
+                b.disabled = true;
+                b.style.cursor = "default";
+            });
+
+            if (selected.en === correct.en) {
+                resultDiv.innerText = "✅ 答對了！";
+                resultDiv.style.color = "#27ae60";
+                btnEl.style.backgroundColor = "#d5f5e3"; // 淺綠色
+                btnEl.style.borderColor = "#2ecc71";
+            } else {
+                resultDiv.innerText = `❌ 答錯了！正確答案是：${correct.en} (${correct.zh})`;
+                resultDiv.style.color = "#c0392b";
+                btnEl.style.backgroundColor = "#fadbd8"; // 淺紅色
+                btnEl.style.borderColor = "#e74c3c";
+                
+                // 把正確選項標示出來
+                buttons.forEach(b => {
+                    if (b.innerText === correct.en || b.innerText === correct.zh) {
+                        b.style.backgroundColor = "#d5f5e3";
+                        b.style.borderColor = "#2ecc71";
+                    }
+                });
+            }
+        }
+
+        // 翻牌記憶遊戲邏輯
+        let hasFlippedCard = false;
+        let lockBoard = false;
+        let firstCard, secondCard;
+        let matchedPairs = 0;
+
+        function initGame() {
+            const board = document.getElementById('game-board');
+            board.innerHTML = '';
+            matchedPairs = 0;
+            document.getElementById('game-status').innerText = "配對進度：0 / 8";
+            document.getElementById('game-status').style.color = "#2c3e50";
+            
+            // 隨機挑選 8 個單字
+            let shuffledWords = [...wordList].sort(() => 0.5 - Math.random()).slice(0, 8);
+            
+            let cards = [];
+            shuffledWords.forEach(word => {
+                cards.push({ text: word.en, type: 'en', id: word.en });
+                cards.push({ text: word.zh, type: 'zh', id: word.en });
+            });
+            
+            // 打亂卡片順序
+            cards.sort(() => 0.5 - Math.random());
+            
+            cards.forEach(cardData => {
+                const card = document.createElement('div');
+                card.classList.add('memory-card');
+                card.dataset.id = cardData.id;
+                card.dataset.text = cardData.text; // 將文字儲存在 dataset，先不顯示
+                card.innerText = "?"; // 預設背面顯示問號
+                card.addEventListener('click', flipCard);
+                board.appendChild(card);
+            });
+        }
+
+        function flipCard() {
+            if (lockBoard) return;
+            if (this === firstCard) return;
+
+            this.classList.add('flipped');
+            this.innerText = this.dataset.text; // 翻開顯示文字
+
+            if (!hasFlippedCard) {
+                // 第一次點擊
+                hasFlippedCard = true;
+                firstCard = this;
+                
+                // 如果翻開的是英文，唸出來
+                if(this.dataset.text === this.dataset.id) playAudioWord(this.dataset.text);
+                return;
+            }
+
+            // 第二次點擊
+            secondCard = this;
+            if(this.dataset.text === this.dataset.id) playAudioWord(this.dataset.text);
+            
+            checkForMatch();
+        }
+
+        function checkForMatch() {
+            let isMatch = firstCard.dataset.id === secondCard.dataset.id;
+            isMatch ? disableCards() : unflipCards();
+        }
+
+        function disableCards() {
+            firstCard.removeEventListener('click', flipCard);
+            secondCard.removeEventListener('click', flipCard);
+            
+            firstCard.classList.remove('flipped');
+            secondCard.classList.remove('flipped');
+            firstCard.classList.add('matched');
+            secondCard.classList.add('matched');
+            
+            resetBoard();
+            matchedPairs++;
+            document.getElementById('game-status').innerText = `配對進度：${matchedPairs} / 8`;
+            
+            if (matchedPairs === 8) {
+                setTimeout(() => {
+                    document.getElementById('game-status').innerText = "🎉 恭喜！您完成所有配對了！";
+                    document.getElementById('game-status').style.color = "#27ae60";
+                }, 500);
+            }
+        }
+
+        function playAudioWord(text) {
+            if ('speechSynthesis' in window) {
+                let utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.9;
+                if (englishFemaleVoice) utterance.voice = englishFemaleVoice;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function unflipCards() {
+            lockBoard = true;
+            setTimeout(() => {
+                firstCard.classList.remove('flipped');
+                secondCard.classList.remove('flipped');
+                firstCard.innerText = '?';
+                secondCard.innerText = '?';
+                resetBoard();
+            }, 1000);
+        }
+
+        function resetBoard() {
+            [hasFlippedCard, lockBoard] = [false, false];
+            [firstCard, secondCard] = [null, null];
+        }
+    </script>
+</body>
+</html>
