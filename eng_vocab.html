@@ -168,12 +168,12 @@
     <h1>📚 英語單字學習簿</h1>
 
     <div class="tab">
-        <button class="tablinks active" onclick="openTab(event, 'Date-20260918')">📅 2026/9/18</button>
-        <button class="tablinks" onclick="openTab(event, 'Date-20260919')">📅 2026/9/19</button>
+        <button class="tablinks active" onclick="openTab(event, 'Date-20260918')">📖 第一課 (9/18)</button>
+        <button class="tablinks" onclick="openTab(event, 'Date-20260919')">📖 第二課 (9/19)</button>
+        <button class="tablinks" onclick="openTab(event, 'Date-20260920')">📖 第三課 (9/20)</button>
         <button class="tablinks" style="color: #e67e22; font-weight: bold;" onclick="openTab(event, 'QuizTab')">📝 自我測驗</button>
         <button class="tablinks" style="color: #8e44ad; font-weight: bold;" onclick="openTab(event, 'GameTab')">🎮 翻牌遊戲</button>
-        <!-- 未來可以新增更多分頁，只需在此加入新的 button 即可 -->
-        <button class="tablinks" onclick="openTab(event, 'NewTabTemplate')">➕ 新增日期</button>
+        <button class="tablinks" onclick="openTab(event, 'NewTabTemplate')">➕ 新增課程</button>
     </div>
 
     <!-- 2026/9/18 分頁內容 -->
@@ -384,14 +384,93 @@
         </div>
     </div>
 
+    <!-- 2026/9/20 分頁內容 -->
+    <div id="Date-20260920" class="tabcontent">
+        <h2>單字清單</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>單字</th>
+                    <th>詞性</th>
+                    <th>中文意思</th>
+                    <th>例句 (Example)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><strong class="word">dangerous</strong><br><span style="color:#7f8c8d; font-size:0.9em;">[ˋdendʒərəs]</span></td><td>adj.</td><td>危險的</td><td>It is <strong>dangerous</strong> to swim here. (在這裡游泳很危險。)</td></tr>
+                <tr><td><strong class="word">terrible</strong><br><span style="color:#7f8c8d; font-size:0.9em;">[ˋtɛrəb!]</span></td><td>adj.</td><td>可怕的、糟糕的</td><td>The weather is <strong>terrible</strong> today. (今天的天氣很糟糕。)</td></tr>
+                <tr><td><strong class="word">precious</strong><br><span style="color:#7f8c8d; font-size:0.9em;">[ˋprɛʃəs]</span></td><td>adj.</td><td>珍貴的</td><td>Time is <strong>precious</strong>. (時間是珍貴的。)</td></tr>
+                <tr><td><strong class="word">humorous</strong><br><span style="color:#7f8c8d; font-size:0.9em;">[ˋhjumərəs]</span></td><td>adj.</td><td>幽默的</td><td>He is a <strong>humorous</strong> person. (他是一個幽默的人。)</td></tr>
+                <tr><td><strong class="word">jealous</strong><br><span style="color:#7f8c8d; font-size:0.9em;">[ˋdʒɛləs]</span></td><td>adj.</td><td>嫉妒的</td><td>She was <strong>jealous</strong> of his success. (她嫉妒他的成功。)</td></tr>
+                <tr><td><strong class="word">nervous</strong><br><span style="color:#7f8c8d; font-size:0.9em;">[ˋnɝvəs]</span></td><td>adj.</td><td>緊張的</td><td>I always get <strong>nervous</strong> before exams. (我考試前總是會緊張。)</td></tr>
+                <tr><td><strong class="word">personal</strong><br><span style="color:#7f8c8d; font-size:0.9em;">[ˋpɝsn!]</span></td><td>adj.</td><td>個人的、私人的</td><td>This is a <strong>personal</strong> matter. (這是個人私事。)</td></tr>
+                <tr><td><strong class="word">equal</strong><br><span style="color:#7f8c8d; font-size:0.9em;">[ˋikwəl]</span></td><td>adj.</td><td>平等的、相等的</td><td>All men are created <strong>equal</strong>. (人生而平等。)</td></tr>
+                <tr><td><strong class="word">central</strong><br><span style="color:#7f8c8d; font-size:0.9em;">[ˋsɛntrəl]</span></td><td>adj.</td><td>中央的、核心的</td><td>The park is in the <strong>central</strong> part of the city. (公園位於城市的中心地帶。)</td></tr>
+                <tr><td><strong class="word">local</strong><br><span style="color:#7f8c8d; font-size:0.9em;">[ˋlok!]</span></td><td>adj.</td><td>當地的、本地的</td><td>We enjoyed the <strong>local</strong> food. (我們喜歡當地的美食。)</td></tr>
+            </tbody>
+        </table>
+
+        <div class="story" style="margin-top: 25px; padding: 20px; background-color: #fff9e6; border-left: 6px solid #f39c12; border-radius: 4px;">
+            <h3 style="margin-top: 0; color: #d35400;">📖 短文閱讀練習</h3>
+            <p style="line-height: 1.6; font-size: 1.1em; color: #444;">
+                Once, there was a <strong style="color: #d35400;">humorous</strong> explorer who loved visiting <strong style="color: #d35400;">local</strong> villages. One day, he found a <strong style="color: #d35400;">precious</strong> diamond in the <strong style="color: #d35400;">central</strong> part of a dark forest. However, the forest was very <strong style="color: #d35400;">dangerous</strong>, and he had a <strong style="color: #d35400;">terrible</strong> feeling that he had to rely on his <strong style="color: #d35400;">personal</strong> map to survive.
+            </p>
+            <p style="line-height: 1.6; font-size: 1.1em; color: #444;">
+                When he brought the diamond back, a <strong style="color: #d35400;">jealous</strong> thief tried to steal it. The explorer felt very <strong style="color: #d35400;">nervous</strong>, but he was smart. He told the thief, "This diamond is magical. It only brings luck if we share it and treat each other as <strong style="color: #d35400;">equal</strong> friends." The thief listened and decided to be good.
+            </p>
+            <hr style="border: 0; border-top: 1px dashed #ccc; margin: 15px 0;">
+            <p style="margin-bottom: 0; font-size: 0.95em; color: #666; line-height: 1.5;">
+                <strong>💡 中文翻譯參考：</strong><br>
+                從前，有一位<strong>幽默的（humorous）</strong>探險家，他喜歡拜訪<strong>當地的（local）</strong>村莊。有一天，他在一座黑森林的<strong>中央（central）</strong>地帶發現了一顆<strong>珍貴的（precious）</strong>鑽石。然而，這座森林非常<strong>危險（dangerous）</strong>，他有一種<strong>糟糕的（terrible）</strong>預感，覺得他必須仰賴他的<strong>私人（personal）</strong>地圖才能生存下來。<br><br>
+                當他把鑽石帶回來時，一個<strong>嫉妒的（jealous）</strong>小偷試圖偷走它。探險家感到非常<strong>緊張（nervous）</strong>，但他很聰明。他告訴小偷：「這顆鑽石有魔力。只有當我們分享它，並將彼此視為<strong>平等的（equal）</strong>朋友時，它才會帶來好運。」小偷聽了，決定要當個好人。
+            </p>
+        </div>
+
+        <div style="margin-top: 25px; padding: 20px; background-color: #e8f6f3; border-left: 6px solid #1abc9c; border-radius: 4px;">
+            <h3 style="margin-top: 0; color: #16a085;">🧠 字根字首字尾分析 (Morphology)</h3>
+            
+            <h4 style="color: #2c3e50; border-bottom: 1px solid #ddd; padding-bottom: 5px;">1. 共通的字尾 (Suffix): -ous</h4>
+            <p style="color: #444; line-height: 1.6;">字尾 <strong>-ous</strong> 的意思是「充滿...的」或「具有...特質的」，用來形成形容詞：</p>
+            <ul style="line-height: 1.6; color: #444;">
+                <li>danger (危險) + <strong>ous</strong> ➔ <strong>dangerous</strong> (危險的)</li>
+                <li>humor (幽默) + <strong>ous</strong> ➔ <strong>humorous</strong> (幽默的)</li>
+                <li>nerve (神經) + <strong>ous</strong> ➔ <strong>nervous</strong> (神經緊繃的 ➔ 緊張的)</li>
+            </ul>
+
+            <h4 style="color: #2c3e50; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-top: 20px;">2. 共通的字尾 (Suffix): -al</h4>
+            <p style="color: #444; line-height: 1.6;">字尾 <strong>-al</strong> 的意思是「與...有關的」或「屬於...的」，用來形成形容詞：</p>
+            <ul style="line-height: 1.6; color: #444;">
+                <li>person (個人) + <strong>al</strong> ➔ <strong>personal</strong> (個人的)</li>
+                <li>center (中心) ➔ 去 e 加 <strong>al</strong> ➔ <strong>central</strong> (中央的)</li>
+            </ul>
+
+            <h4 style="color: #2c3e50; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-top: 20px;">3. 共通的字尾 (Suffix): -ible / -able</h4>
+            <p style="color: #444; line-height: 1.6;">字尾 <strong>-ible</strong> 意思是「可...的」或「具有...性質的」，通常與拉丁字根結合形成形容詞：</p>
+            <ul style="line-height: 1.6; color: #444;">
+                <li>terr (驚恐) + <strong>ible</strong> ➔ <strong>terrible</strong> (可怕的)</li>
+            </ul>
+        </div>
+    </div>
+
     <!-- 測驗分頁內容 -->
     <div id="QuizTab" class="tabcontent">
         <h2>📝 綜合自我測驗</h2>
-        <p>測試看看這幾天學的單字您記住了多少！(共 20 字)</p>
+        <p>請先選擇要測驗的範圍，再選擇測驗模式！</p>
         
-        <div style="margin-top: 15px; margin-bottom: 20px;">
-            <button id="mode-mc-btn" onclick="setQuizMode('mc')" style="padding: 10px 20px; font-size: 1.1em; background-color: #34495e; color: white; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px;">🔠 選擇題模式</button>
+        <div style="margin-bottom: 15px;">
+            <strong style="margin-right: 10px; color: #2c3e50;">📚 測驗範圍：</strong>
+            <button id="scope-all-btn" onclick="setQuizScope('all')" style="padding: 6px 15px; font-size: 1em; background-color: #e67e22; color: white; border: none; border-radius: 5px; cursor: pointer; margin-right: 5px;">綜合 (1~3 課)</button>
+            <button id="scope-1-btn" onclick="setQuizScope(1)" style="padding: 6px 15px; font-size: 1em; background-color: #ecf0f1; color: #333; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; margin-right: 5px;">第一課</button>
+            <button id="scope-2-btn" onclick="setQuizScope(2)" style="padding: 6px 15px; font-size: 1em; background-color: #ecf0f1; color: #333; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; margin-right: 5px;">第二課</button>
+            <button id="scope-3-btn" onclick="setQuizScope(3)" style="padding: 6px 15px; font-size: 1em; background-color: #ecf0f1; color: #333; border: 1px solid #ccc; border-radius: 5px; cursor: pointer;">第三課</button>
+        </div>
+        
+        <div style="margin-bottom: 20px;">
+            <strong style="margin-right: 10px; color: #2c3e50;">⚙️ 測驗模式：</strong>
+            <button id="mode-mc-btn" onclick="setQuizMode('mc')" style="padding: 10px 20px; font-size: 1.1em; background-color: #34495e; color: white; border: none; border-radius: 5px; cursor: pointer;">🔠 選擇題模式</button>
             <button id="mode-dict-btn" onclick="setQuizMode('dict')" style="padding: 10px 20px; font-size: 1.1em; background-color: #bdc3c7; color: #333; border: none; border-radius: 5px; cursor: pointer;">🎧 聽寫模式</button>
+            <button id="mode-spell-btn" onclick="setQuizMode('spell')" style="padding: 10px 20px; font-size: 1.1em; background-color: #bdc3c7; color: #333; border: none; border-radius: 5px; cursor: pointer;">✍️ 中翻英拼寫</button>
+            <button id="mode-mix-btn" onclick="setQuizMode('mix')" style="padding: 10px 20px; font-size: 1.1em; background-color: #bdc3c7; color: #333; border: none; border-radius: 5px; cursor: pointer;">🌪️ 綜合隨機測驗</button>
         </div>
         
         <div id="quiz-container" style="background: #fff; padding: 25px; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
@@ -501,48 +580,133 @@
 
         // 測驗功能邏輯
         const wordList = [
-            { en: "computer", zh: "電腦" }, { en: "complain", zh: "抱怨" },
-            { en: "command", zh: "命令、指揮" }, { en: "comment", zh: "評論、註解" },
-            { en: "complete", zh: "完成、完整的" }, { en: "compare", zh: "比較" },
-            { en: "company", zh: "公司、陪伴" }, { en: "minute", zh: "分鐘" },
-            { en: "minor", zh: "次要的、較小的" }, { en: "minus", zh: "減去、負的" },
-            { en: "include", zh: "包含、包括" }, { en: "improve", zh: "改善、提高" },
-            { en: "problem", zh: "問題、難題" }, { en: "promise", zh: "承諾、保證" },
-            { en: "pronounce", zh: "發音" }, { en: "emphasize", zh: "強調" },
-            { en: "realize", zh: "意識到、實現" }, { en: "apologize", zh: "道歉" },
-            { en: "famous", zh: "著名的" }, { en: "delicious", zh: "美味的" }
+            { en: "computer", zh: "電腦", lesson: 1 }, { en: "complain", zh: "抱怨", lesson: 1 },
+            { en: "command", zh: "命令、指揮", lesson: 1 }, { en: "comment", zh: "評論、註解", lesson: 1 },
+            { en: "complete", zh: "完成、完整的", lesson: 1 }, { en: "compare", zh: "比較", lesson: 1 },
+            { en: "company", zh: "公司、陪伴", lesson: 1 }, { en: "minute", zh: "分鐘", lesson: 1 },
+            { en: "minor", zh: "次要的、較小的", lesson: 1 }, { en: "minus", zh: "減去、負的", lesson: 1 },
+            { en: "include", zh: "包含、包括", lesson: 2 }, { en: "improve", zh: "改善、提高", lesson: 2 },
+            { en: "problem", zh: "問題、難題", lesson: 2 }, { en: "promise", zh: "承諾、保證", lesson: 2 },
+            { en: "pronounce", zh: "發音", lesson: 2 }, { en: "emphasize", zh: "強調", lesson: 2 },
+            { en: "realize", zh: "意識到、實現", lesson: 2 }, { en: "apologize", zh: "道歉", lesson: 2 },
+            { en: "famous", zh: "著名的", lesson: 2 }, { en: "delicious", zh: "美味的", lesson: 2 },
+            { en: "dangerous", zh: "危險的", lesson: 3 }, { en: "terrible", zh: "可怕的、糟糕的", lesson: 3 },
+            { en: "precious", zh: "珍貴的", lesson: 3 },
+            { en: "humorous", zh: "幽默的", lesson: 3 }, { en: "jealous", zh: "嫉妒的", lesson: 3 },
+            { en: "nervous", zh: "緊張的", lesson: 3 }, { en: "personal", zh: "個人的、私人的", lesson: 3 },
+            { en: "equal", zh: "平等的、相等的", lesson: 3 }, { en: "central", zh: "中央的、核心的", lesson: 3 },
+            { en: "local", zh: "當地的、本地的", lesson: 3 }
         ];
 
         let currentQuestion = {};
         let currentQuizMode = 'mc'; // 'mc' for multiple choice, 'dict' for dictation
+        let currentQuizScope = 'all'; // 'all' or 1, 2, 3
+        
+        let quizQueue = [];
+        let wrongWords = [];
+        let isQuizActive = false;
+        
+        function setQuizScope(scope) {
+            currentQuizScope = scope;
+            
+            // 更新按鈕樣式
+            const scopes = ['all', 1, 2, 3];
+            scopes.forEach(s => {
+                let btn = document.getElementById('scope-' + s + '-btn');
+                if (btn) {
+                    if (s === scope) {
+                        btn.style.backgroundColor = '#e67e22';
+                        btn.style.color = 'white';
+                        btn.style.border = 'none';
+                    } else {
+                        btn.style.backgroundColor = '#ecf0f1';
+                        btn.style.color = '#333';
+                        btn.style.border = '1px solid #ccc';
+                    }
+                }
+            });
+            
+            resetQuizUI();
+        }
 
         function setQuizMode(mode) {
             currentQuizMode = mode;
             
             // 更新按鈕樣式
-            if (mode === 'mc') {
-                document.getElementById('mode-mc-btn').style.backgroundColor = '#34495e';
-                document.getElementById('mode-mc-btn').style.color = 'white';
-                document.getElementById('mode-dict-btn').style.backgroundColor = '#bdc3c7';
-                document.getElementById('mode-dict-btn').style.color = '#333';
-            } else {
-                document.getElementById('mode-dict-btn').style.backgroundColor = '#34495e';
-                document.getElementById('mode-dict-btn').style.color = 'white';
-                document.getElementById('mode-mc-btn').style.backgroundColor = '#bdc3c7';
-                document.getElementById('mode-mc-btn').style.color = '#333';
-            }
+            const modes = ['mc', 'dict', 'spell', 'mix'];
+            modes.forEach(m => {
+                let btn = document.getElementById('mode-' + m + '-btn');
+                if (btn) {
+                    if (m === mode) {
+                        btn.style.backgroundColor = '#34495e';
+                        btn.style.color = 'white';
+                    } else {
+                        btn.style.backgroundColor = '#bdc3c7';
+                        btn.style.color = '#333';
+                    }
+                }
+            });
             
+            resetQuizUI();
+        }
+        
+        function resetQuizUI() {
             // 重置測驗畫面
+            quizQueue = [];
+            wrongWords = [];
+            isQuizActive = false;
             document.getElementById('quiz-options').innerHTML = '';
             document.getElementById('quiz-result').innerText = '';
             document.getElementById('quiz-question').innerText = "準備好了嗎？請點擊下方按鈕開始！";
+            document.getElementById('start-quiz-btn').style.display = "block";
             document.getElementById('start-quiz-btn').innerText = "🚀 開始測驗";
             document.getElementById('start-quiz-btn').style.backgroundColor = "#e67e22";
         }
 
         function startQuiz() {
-            document.getElementById('start-quiz-btn').innerText = "下一題";
-            document.getElementById('start-quiz-btn').style.backgroundColor = "#3498db";
+            const startBtn = document.getElementById('start-quiz-btn');
+            
+            if (startBtn.innerText === "🚀 開始測驗" || startBtn.innerText === "🔄 重新測驗錯題") {
+                if (startBtn.innerText === "🔄 重新測驗錯題") {
+                    quizQueue = [...wrongWords];
+                } else {
+                    let filteredList = wordList;
+                    if (currentQuizScope !== 'all') {
+                        filteredList = wordList.filter(w => w.lesson === currentQuizScope);
+                    }
+                    if (filteredList.length === 0) filteredList = wordList;
+                    quizQueue = [...filteredList];
+                }
+                
+                quizQueue.sort(() => Math.random() - 0.5);
+                wrongWords = [];
+                isQuizActive = true;
+            }
+            
+            if (quizQueue.length === 0) {
+                const optionsContainer = document.getElementById('quiz-options');
+                optionsContainer.innerHTML = '';
+                document.getElementById('quiz-question').innerText = "🎉 測驗結束！";
+                
+                if (wrongWords.length === 0) {
+                    document.getElementById('quiz-result').innerText = "太棒了！您全答對了！💯";
+                    document.getElementById('quiz-result').style.color = "#27ae60";
+                    startBtn.innerText = "🚀 開始測驗";
+                    startBtn.style.backgroundColor = "#e67e22";
+                } else {
+                    document.getElementById('quiz-result').innerHTML = "您有 " + wrongWords.length + " 個不熟悉的單字：<br><br>" + wrongWords.map(w => w.en + " (" + w.zh + ")").join("<br>");
+                    document.getElementById('quiz-result').style.color = "#c0392b";
+                    startBtn.innerText = "🔄 重新測驗錯題";
+                    startBtn.style.backgroundColor = "#e74c3c";
+                }
+                isQuizActive = false;
+                return;
+            }
+
+            startBtn.innerText = "下一題";
+            startBtn.style.backgroundColor = "#3498db";
+            // 點擊後隱藏「下一題」按鈕，等使用者答完再顯示
+            startBtn.style.display = "none";
             generateQuestion();
         }
 
@@ -551,11 +715,16 @@
             optionsContainer.innerHTML = '';
             document.getElementById('quiz-result').innerText = '';
 
-            // 隨機選一個題目
-            const qIndex = Math.floor(Math.random() * wordList.length);
-            currentQuestion = wordList[qIndex];
+            // 從 queue 取出一個題目
+            currentQuestion = quizQueue.shift();
             
-            if (currentQuizMode === 'mc') {
+            let activeMode = currentQuizMode;
+            if (activeMode === 'mix') {
+                const possibleModes = ['mc', 'dict', 'spell'];
+                activeMode = possibleModes[Math.floor(Math.random() * possibleModes.length)];
+            }
+            
+            if (activeMode === 'mc') {
                 // 決定是英翻中還是中翻英 (50% 機率)
                 const isEnToZh = Math.random() > 0.5;
                 if (isEnToZh) {
@@ -565,17 +734,28 @@
                     document.getElementById('quiz-question').innerText = currentQuestion.zh + " 的英文是？";
                     generateMultipleChoice(false);
                 }
-            } else {
+            } else if (activeMode === 'dict') {
                 document.getElementById('quiz-question').innerText = "🎧 請聽發音並拼出正確的英文單字：";
-                generateDictation();
+                generateTextInput(true);
+            } else if (activeMode === 'spell') {
+                document.getElementById('quiz-question').innerText = "✍️ 「" + currentQuestion.zh + "」的英文是？ (請拼寫)";
+                generateTextInput(false);
             }
         }
 
         function generateMultipleChoice(isEnToZh) {
             const optionsContainer = document.getElementById('quiz-options');
             let options = [currentQuestion];
-            while (options.length < 4) {
-                let randomOpt = wordList[Math.floor(Math.random() * wordList.length)];
+            
+            // 依據選擇的範圍過濾單字
+            let filteredList = wordList;
+            if (currentQuizScope !== 'all') {
+                filteredList = wordList.filter(w => w.lesson === currentQuizScope);
+            }
+            if (filteredList.length === 0) filteredList = wordList;
+            
+            while (options.length < 4 && options.length < filteredList.length) {
+                let randomOpt = filteredList[Math.floor(Math.random() * filteredList.length)];
                 if (!options.includes(randomOpt)) {
                     options.push(randomOpt);
                 }
@@ -605,22 +785,24 @@
             });
         }
 
-        function generateDictation() {
+        function generateTextInput(showAudio) {
             const optionsContainer = document.getElementById('quiz-options');
             
-            // 播放發音按鈕
-            let playBtn = document.createElement('button');
-            playBtn.innerText = '🔊 播放 / 重播發音';
-            playBtn.style.padding = "12px";
-            playBtn.style.fontSize = "1.2em";
-            playBtn.style.backgroundColor = "#3498db";
-            playBtn.style.color = "white";
-            playBtn.style.border = "none";
-            playBtn.style.borderRadius = "8px";
-            playBtn.style.cursor = "pointer";
-            playBtn.style.marginBottom = "15px";
-            playBtn.onclick = playCurrentWord;
-            optionsContainer.appendChild(playBtn);
+            if (showAudio) {
+                // 播放發音按鈕
+                let playBtn = document.createElement('button');
+                playBtn.innerText = '🔊 播放 / 重播發音';
+                playBtn.style.padding = "12px";
+                playBtn.style.fontSize = "1.2em";
+                playBtn.style.backgroundColor = "#3498db";
+                playBtn.style.color = "white";
+                playBtn.style.border = "none";
+                playBtn.style.borderRadius = "8px";
+                playBtn.style.cursor = "pointer";
+                playBtn.style.marginBottom = "15px";
+                playBtn.onclick = playCurrentWord;
+                optionsContainer.appendChild(playBtn);
+            }
 
             // 拼字輸入框
             let inputField = document.createElement('input');
@@ -651,9 +833,11 @@
             submitBtn.onclick = checkDictation;
             optionsContainer.appendChild(submitBtn);
 
-            // 延遲播放發音與 focus (確保畫面渲染完畢)
-            setTimeout(playCurrentWord, 300);
-            setTimeout(() => inputField.focus(), 300);
+            // 自動聚焦，並且如果需要發音就播放一次
+            setTimeout(() => {
+                inputField.focus();
+                if (showAudio) playCurrentWord();
+            }, 100);
         }
 
         function playCurrentWord() {
@@ -684,11 +868,17 @@
                 inputField.style.borderColor = "#2ecc71";
                 inputField.style.backgroundColor = "#d5f5e3";
             } else {
-                resultDiv.innerText = `❌ 拼錯了！正確拼法是：${currentQuestion.en} (${currentQuestion.zh})`;
+                resultDiv.innerText = `❌ 拼錯了 (沒寫也算錯喔)！正確拼法是：${currentQuestion.en} (${currentQuestion.zh})`;
                 resultDiv.style.color = "#c0392b";
                 inputField.style.borderColor = "#e74c3c";
                 inputField.style.backgroundColor = "#fadbd8";
+                
+                if (!wrongWords.some(w => w.en === currentQuestion.en)) {
+                    wrongWords.push(currentQuestion);
+                }
             }
+            
+            document.getElementById('start-quiz-btn').style.display = "block";
         }
 
         function checkAnswer(selected, correct, btnEl) {
@@ -711,6 +901,10 @@
                 btnEl.style.backgroundColor = "#fadbd8"; // 淺紅色
                 btnEl.style.borderColor = "#e74c3c";
                 
+                if (!wrongWords.some(w => w.en === currentQuestion.en)) {
+                    wrongWords.push(currentQuestion);
+                }
+                
                 // 把正確選項標示出來
                 buttons.forEach(b => {
                     if (b.innerText === correct.en || b.innerText === correct.zh) {
@@ -719,6 +913,8 @@
                     }
                 });
             }
+            
+            document.getElementById('start-quiz-btn').style.display = "block";
         }
 
         // 翻牌記憶遊戲邏輯
