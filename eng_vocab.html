@@ -172,6 +172,7 @@
         <button class="tablinks" onclick="openTab(event, 'Date-20260919')">📖 第二課 (9/19)</button>
         <button class="tablinks" onclick="openTab(event, 'Date-20260920')">📖 第三課 (9/20)</button>
         <button class="tablinks" style="color: #e67e22; font-weight: bold;" onclick="openTab(event, 'QuizTab')">📝 自我測驗</button>
+        <button class="tablinks" style="color: #c0392b; font-weight: bold;" onclick="openTab(event, 'MistakeTab')">⚠️ 錯題本</button>
         <button class="tablinks" style="color: #8e44ad; font-weight: bold;" onclick="openTab(event, 'GameTab')">🎮 翻牌遊戲</button>
         <button class="tablinks" onclick="openTab(event, 'NewTabTemplate')">➕ 新增課程</button>
     </div>
@@ -458,11 +459,11 @@
         <p>請先選擇要測驗的範圍，再選擇測驗模式！</p>
         
         <div style="margin-bottom: 15px;">
-            <strong style="margin-right: 10px; color: #2c3e50;">📚 測驗範圍：</strong>
-            <button id="scope-all-btn" onclick="setQuizScope('all')" style="padding: 6px 15px; font-size: 1em; background-color: #e67e22; color: white; border: none; border-radius: 5px; cursor: pointer; margin-right: 5px;">綜合 (1~3 課)</button>
-            <button id="scope-1-btn" onclick="setQuizScope(1)" style="padding: 6px 15px; font-size: 1em; background-color: #ecf0f1; color: #333; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; margin-right: 5px;">第一課</button>
-            <button id="scope-2-btn" onclick="setQuizScope(2)" style="padding: 6px 15px; font-size: 1em; background-color: #ecf0f1; color: #333; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; margin-right: 5px;">第二課</button>
-            <button id="scope-3-btn" onclick="setQuizScope(3)" style="padding: 6px 15px; font-size: 1em; background-color: #ecf0f1; color: #333; border: 1px solid #ccc; border-radius: 5px; cursor: pointer;">第三課</button>
+            <strong style="margin-right: 10px; color: #2c3e50;">📚 測驗範圍 (可複選)：</strong>
+            <button id="scope-all-btn" onclick="toggleQuizScope('all')" style="padding: 6px 15px; font-size: 1em; background-color: #e67e22; color: white; border: none; border-radius: 5px; cursor: pointer; margin-right: 5px;">全選 (1~3 課)</button>
+            <button id="scope-1-btn" onclick="toggleQuizScope(1)" style="padding: 6px 15px; font-size: 1em; background-color: #e67e22; color: white; border: none; border-radius: 5px; cursor: pointer; margin-right: 5px;">第一課</button>
+            <button id="scope-2-btn" onclick="toggleQuizScope(2)" style="padding: 6px 15px; font-size: 1em; background-color: #e67e22; color: white; border: none; border-radius: 5px; cursor: pointer; margin-right: 5px;">第二課</button>
+            <button id="scope-3-btn" onclick="toggleQuizScope(3)" style="padding: 6px 15px; font-size: 1em; background-color: #e67e22; color: white; border: none; border-radius: 5px; cursor: pointer;">第三課</button>
         </div>
         
         <div style="margin-bottom: 20px;">
@@ -480,6 +481,34 @@
             </div>
             <button id="start-quiz-btn" onclick="startQuiz()" style="padding: 12px 24px; font-size: 1.1em; background-color: #e67e22; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 25px; font-weight: bold; transition: background-color 0.3s;">🚀 開始測驗</button>
             <div id="quiz-result" style="margin-top: 20px; font-weight: bold; font-size: 1.3em; min-height: 30px;"></div>
+        </div>
+    </div>
+
+    <!-- 錯題本分頁內容 -->
+    <div id="MistakeTab" class="tabcontent">
+        <h2>⚠️ 錯題本</h2>
+        <p>這裡記錄了您在測驗中曾經答錯的單字。反覆練習可以加深記憶喔！</p>
+        
+        <div style="margin-bottom: 20px;">
+            <button onclick="downloadMistakes()" style="padding: 10px 20px; font-size: 1.1em; background-color: #34495e; color: white; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px;">💾 匯出錯題 (.txt)</button>
+            <button onclick="startMistakeQuizDirectly()" style="padding: 10px 20px; font-size: 1.1em; background-color: #c0392b; color: white; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px;">📝 開始錯題測驗</button>
+            <button onclick="clearMistakes()" style="padding: 10px 20px; font-size: 1.1em; background-color: #95a5a6; color: white; border: none; border-radius: 5px; cursor: pointer;">🗑️ 清空錯題本</button>
+        </div>
+
+        <table id="mistakes-table" style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+            <thead>
+                <tr>
+                    <th style="border: 1px solid #e0e0e0; padding: 14px; background-color: #f8f9fa;">單字</th>
+                    <th style="border: 1px solid #e0e0e0; padding: 14px; background-color: #f8f9fa;">中文意思</th>
+                    <th style="border: 1px solid #e0e0e0; padding: 14px; background-color: #f8f9fa;">出處</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- 錯題會動態顯示於此 -->
+            </tbody>
+        </table>
+        <div id="no-mistake-msg" style="margin-top: 20px; font-size: 1.2em; color: #27ae60; font-weight: bold;">
+            目前沒有錯題記錄，太棒了！繼續保持！
         </div>
     </div>
 
@@ -549,6 +578,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             // 頁面初次載入時也嘗試抓取一次 (某些瀏覽器可能不觸發 onvoiceschanged)
             loadVoices();
+            loadGlobalMistakes();
 
             var words = document.querySelectorAll('strong.word');
             words.forEach(function(el) {
@@ -578,6 +608,116 @@
             });
         });
 
+        // 錯題本邏輯
+        let globalMistakes = [];
+        
+        function loadGlobalMistakes() {
+            let saved = localStorage.getItem('eng_vocab_mistakes');
+            if (saved) {
+                try {
+                    globalMistakes = JSON.parse(saved);
+                } catch (e) {
+                    globalMistakes = [];
+                }
+            }
+            renderMistakesTable();
+        }
+
+        function saveGlobalMistakes() {
+            localStorage.setItem('eng_vocab_mistakes', JSON.stringify(globalMistakes));
+            renderMistakesTable();
+        }
+
+        function addMistake(wordObj) {
+            if (!globalMistakes.some(w => w.en === wordObj.en)) {
+                globalMistakes.push(wordObj);
+                saveGlobalMistakes();
+            }
+            if (!wrongWords.some(w => w.en === wordObj.en)) {
+                wrongWords.push(wordObj);
+            }
+        }
+        
+        function clearMistakes() {
+            if (confirm("確定要清空所有錯題記錄嗎？")) {
+                globalMistakes = [];
+                saveGlobalMistakes();
+            }
+        }
+        
+        function downloadMistakes() {
+            if (globalMistakes.length === 0) {
+                alert("目前沒有錯題記錄喔！");
+                return;
+            }
+            let textContent = "英語單字學習簿 - 錯題記錄\n\n";
+            globalMistakes.forEach(w => {
+                textContent += `${w.en} - ${w.zh} (第 ${w.lesson} 課)\n`;
+            });
+            let blob = new Blob([textContent], { type: "text/plain;charset=utf-8" });
+            let url = URL.createObjectURL(blob);
+            let a = document.createElement('a');
+            a.href = url;
+            a.download = "eng_vocab_mistakes.txt";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function startMistakeQuizDirectly() {
+            if (globalMistakes.length === 0) {
+                alert("目前沒有錯題記錄，無法進行錯題測驗喔！");
+                return;
+            }
+            // 切換到測驗分頁
+            let quizTabBtn = document.querySelector('.tablinks[onclick*="QuizTab"]');
+            if(quizTabBtn) {
+                let evt = { currentTarget: quizTabBtn }; 
+                openTab(evt, 'QuizTab');
+            } else {
+                document.getElementById('QuizTab').style.display = "block";
+                document.getElementById('MistakeTab').style.display = "none";
+            }
+            
+            // 進入強制錯題模式
+            resetQuizUI();
+            quizQueue = [...globalMistakes].sort(() => Math.random() - 0.5);
+            isQuizActive = true;
+            wrongWords = [];
+            
+            const startBtn = document.getElementById('start-quiz-btn');
+            startBtn.innerText = "下一題";
+            startBtn.style.backgroundColor = "#3498db";
+            startBtn.style.display = "none";
+            
+            document.getElementById('quiz-question').innerText = "⚠️ 錯題測驗開始！";
+            generateQuestion();
+        }
+
+        function renderMistakesTable() {
+            const tbody = document.querySelector('#mistakes-table tbody');
+            const msg = document.getElementById('no-mistake-msg');
+            const table = document.getElementById('mistakes-table');
+            
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            
+            if (globalMistakes.length === 0) {
+                table.style.display = 'none';
+                msg.style.display = 'block';
+            } else {
+                table.style.display = 'table';
+                msg.style.display = 'none';
+                
+                globalMistakes.forEach(w => {
+                    let tr = document.createElement('tr');
+                    tr.innerHTML = `<td style="border: 1px solid #e0e0e0; padding: 14px;"><strong class="word">${w.en}</strong></td><td style="border: 1px solid #e0e0e0; padding: 14px;">${w.zh}</td><td style="border: 1px solid #e0e0e0; padding: 14px;">第 ${w.lesson} 課</td>`;
+                    tbody.appendChild(tr);
+                });
+            }
+        }
+
         // 測驗功能邏輯
         const wordList = [
             { en: "computer", zh: "電腦", lesson: 1 }, { en: "complain", zh: "抱怨", lesson: 1 },
@@ -600,21 +740,47 @@
 
         let currentQuestion = {};
         let currentQuizMode = 'mc'; // 'mc' for multiple choice, 'dict' for dictation
-        let currentQuizScope = 'all'; // 'all' or 1, 2, 3
+        let currentQuizScope = [1, 2, 3]; // 預設全選
         
         let quizQueue = [];
         let wrongWords = [];
         let isQuizActive = false;
         
-        function setQuizScope(scope) {
-            currentQuizScope = scope;
+        function toggleQuizScope(scope) {
+            if (scope === 'all') {
+                currentQuizScope = [1, 2, 3];
+            } else {
+                if (currentQuizScope.includes(scope)) {
+                    if (currentQuizScope.length > 1) {
+                        currentQuizScope = currentQuizScope.filter(s => s !== scope);
+                    } else {
+                        alert("至少需要選擇一課喔！");
+                        return;
+                    }
+                } else {
+                    currentQuizScope.push(scope);
+                }
+            }
             
             // 更新按鈕樣式
-            const scopes = ['all', 1, 2, 3];
-            scopes.forEach(s => {
+            const isAll = (currentQuizScope.length === 3);
+            let btnAll = document.getElementById('scope-all-btn');
+            if (btnAll) {
+                if (isAll) {
+                    btnAll.style.backgroundColor = '#e67e22';
+                    btnAll.style.color = 'white';
+                    btnAll.style.border = 'none';
+                } else {
+                    btnAll.style.backgroundColor = '#ecf0f1';
+                    btnAll.style.color = '#333';
+                    btnAll.style.border = '1px solid #ccc';
+                }
+            }
+
+            [1, 2, 3].forEach(s => {
                 let btn = document.getElementById('scope-' + s + '-btn');
                 if (btn) {
-                    if (s === scope) {
+                    if (currentQuizScope.includes(s)) {
                         btn.style.backgroundColor = '#e67e22';
                         btn.style.color = 'white';
                         btn.style.border = 'none';
@@ -670,10 +836,7 @@
                 if (startBtn.innerText === "🔄 重新測驗錯題") {
                     quizQueue = [...wrongWords];
                 } else {
-                    let filteredList = wordList;
-                    if (currentQuizScope !== 'all') {
-                        filteredList = wordList.filter(w => w.lesson === currentQuizScope);
-                    }
+                    let filteredList = wordList.filter(w => currentQuizScope.includes(w.lesson));
                     if (filteredList.length === 0) filteredList = wordList;
                     quizQueue = [...filteredList];
                 }
@@ -748,10 +911,7 @@
             let options = [currentQuestion];
             
             // 依據選擇的範圍過濾單字
-            let filteredList = wordList;
-            if (currentQuizScope !== 'all') {
-                filteredList = wordList.filter(w => w.lesson === currentQuizScope);
-            }
+            let filteredList = wordList.filter(w => currentQuizScope.includes(w.lesson));
             if (filteredList.length === 0) filteredList = wordList;
             
             while (options.length < 4 && options.length < filteredList.length) {
@@ -873,9 +1033,7 @@
                 inputField.style.borderColor = "#e74c3c";
                 inputField.style.backgroundColor = "#fadbd8";
                 
-                if (!wrongWords.some(w => w.en === currentQuestion.en)) {
-                    wrongWords.push(currentQuestion);
-                }
+                addMistake(currentQuestion);
             }
             
             document.getElementById('start-quiz-btn').style.display = "block";
@@ -901,9 +1059,7 @@
                 btnEl.style.backgroundColor = "#fadbd8"; // 淺紅色
                 btnEl.style.borderColor = "#e74c3c";
                 
-                if (!wrongWords.some(w => w.en === currentQuestion.en)) {
-                    wrongWords.push(currentQuestion);
-                }
+                addMistake(currentQuestion);
                 
                 // 把正確選項標示出來
                 buttons.forEach(b => {
