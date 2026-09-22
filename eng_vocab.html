@@ -672,7 +672,7 @@
             function createUtterance() {
                 let utterance = new SpeechSynthesisUtterance(text);
                 utterance.lang = 'en-US';
-                utterance.rate = 0.9;
+                utterance.rate = 0.8;
                 if (englishFemaleVoice) {
                     utterance.voice = englishFemaleVoice;
                 }
@@ -829,7 +829,7 @@
                         var sentenceObj = sentences[currentSentenceIndex];
                         var utterance = new SpeechSynthesisUtterance(sentenceObj.text);
                         utterance.lang = 'en-US';
-                        utterance.rate = 0.9;
+                        utterance.rate = 0.8;
                         if (englishFemaleVoice) {
                             utterance.voice = englishFemaleVoice;
                         }
