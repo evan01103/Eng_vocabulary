@@ -643,9 +643,60 @@
             }
         }
         
+        let currentSpeakId = 0;
+        let speakTimeoutId = null;
+
         // 由於語音清單通常是異步載入的，當系統語音載入完成時會觸發此事件
         if ('speechSynthesis' in window) {
             window.speechSynthesis.onvoiceschanged = loadVoices;
+        }
+
+        // 發音兩次且間隔2秒的輔助函式
+        function speakWordTwice(text) {
+            if (!('speechSynthesis' in window)) {
+                alert('您的瀏覽器不支援語音發音功能。');
+                return;
+            }
+            
+            if (speakTimeoutId) {
+                clearTimeout(speakTimeoutId);
+                speakTimeoutId = null;
+            }
+            
+            // 取消目前正在播放的聲音
+            window.speechSynthesis.cancel();
+            
+            currentSpeakId++;
+            let mySpeakId = currentSpeakId;
+            
+            function createUtterance() {
+                let utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.9;
+                if (englishFemaleVoice) {
+                    utterance.voice = englishFemaleVoice;
+                }
+                return utterance;
+            }
+
+            // 稍微延遲以確保 cancel() 乾淨結束
+            setTimeout(function() {
+                if (mySpeakId !== currentSpeakId) return;
+                
+                let firstUtterance = createUtterance();
+                let secondUtterance = createUtterance();
+                
+                firstUtterance.onend = function() {
+                    if (mySpeakId !== currentSpeakId) return;
+                    
+                    speakTimeoutId = setTimeout(function() {
+                        if (mySpeakId !== currentSpeakId) return;
+                        window.speechSynthesis.speak(secondUtterance);
+                    }, 500); // 間隔 0.5 秒
+                };
+                
+                window.speechSynthesis.speak(firstUtterance);
+            }, 50);
         }
 
         // 在頁面載入後自動為所有單字加上發音按鈕
@@ -662,20 +713,7 @@
                 btn.innerHTML = '🔊';
                 btn.title = '聆聽發音 (女聲)';
                 btn.onclick = function() {
-                    if ('speechSynthesis' in window) {
-                        var utterance = new SpeechSynthesisUtterance(wordText);
-                        utterance.lang = 'en-US';
-                        utterance.rate = 0.9; // 稍微放慢語速，聽得更清楚
-                        
-                        // 指定為女聲
-                        if (englishFemaleVoice) {
-                            utterance.voice = englishFemaleVoice;
-                        }
-                        
-                        window.speechSynthesis.speak(utterance);
-                    } else {
-                        alert('您的瀏覽器不支援語音發音功能。');
-                    }
+                    speakWordTwice(wordText);
                 };
                 // 將按鈕插入到單字元素的正後方
                 el.parentNode.insertBefore(btn, el.nextSibling);
@@ -1075,17 +1113,7 @@
         }
 
         function playCurrentWord() {
-            if ('speechSynthesis' in window) {
-                var utterance = new SpeechSynthesisUtterance(currentQuestion.en);
-                utterance.lang = 'en-US';
-                utterance.rate = 0.9;
-                if (englishFemaleVoice) {
-                    utterance.voice = englishFemaleVoice;
-                }
-                window.speechSynthesis.speak(utterance);
-            } else {
-                alert('您的瀏覽器不支援語音發音功能。');
-            }
+            speakWordTwice(currentQuestion.en);
         }
 
         function checkDictation() {
@@ -1234,13 +1262,7 @@
         }
 
         function playAudioWord(text) {
-            if ('speechSynthesis' in window) {
-                let utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'en-US';
-                utterance.rate = 0.9;
-                if (englishFemaleVoice) utterance.voice = englishFemaleVoice;
-                window.speechSynthesis.speak(utterance);
-            }
+            speakWordTwice(text);
         }
 
         function unflipCards() {
