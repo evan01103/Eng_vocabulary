@@ -726,7 +726,7 @@
                     readBtn.title = '每次點擊朗讀下一句';
                     
                     // 找出所有在 hr 之前的英文 p 段落
-                    var englishText = "";
+                    var paragraphs = [];
                     var children = storyDiv.children;
                     var passedH3 = false;
                     for (var i = 0; i < children.length; i++) {
@@ -736,16 +736,86 @@
                         }
                         if (children[i].tagName === 'HR') break;
                         if (passedH3 && children[i].tagName === 'P') {
-                            englishText += children[i].innerText + " ";
+                            paragraphs.push(children[i]);
                         }
                     }
                     
-                    // 用正則表達式把句子切開 (以 . ? ! 結尾)
-                    var sentences = englishText.match(/[^.!?]+[.!?]+/g) || [englishText];
-                    sentences = sentences.map(s => s.trim()).filter(s => s.length > 0);
+                    var fullText = "";
+                    var paragraphOffsets = [];
+                    paragraphs.forEach(function(p) {
+                        paragraphOffsets.push({
+                            p: p,
+                            start: fullText.length
+                        });
+                        // 使用 textContent 確保和 DOM text nodes 完全對應
+                        fullText += p.textContent;
+                    });
+                    
+                    var sentences = [];
+                    var regex = /[^.!?]+[.!?]+/g;
+                    var match;
+                    while ((match = regex.exec(fullText)) !== null) {
+                        sentences.push({
+                            text: match[0].trim(),
+                            startOffset: match.index + match[0].indexOf(match[0].trim())
+                        });
+                    }
+                    if (sentences.length === 0) {
+                        sentences.push({ text: fullText.trim(), startOffset: 0 });
+                    }
                     
                     var currentSentenceIndex = 0;
                     
+                    function highlightWord(globalIndex, length) {
+                        let targetP = null;
+                        let pStartOffset = 0;
+                        for (let i = paragraphOffsets.length - 1; i >= 0; i--) {
+                            if (globalIndex >= paragraphOffsets[i].start) {
+                                targetP = paragraphOffsets[i].p;
+                                pStartOffset = paragraphOffsets[i].start;
+                                break;
+                            }
+                        }
+                        if (!targetP) return;
+                        
+                        let localIndex = globalIndex - pStartOffset;
+                        let walker = document.createTreeWalker(targetP, NodeFilter.SHOW_TEXT, null, false);
+                        let node;
+                        let currentIndex = 0;
+                        let startNode = null, startNodeOffset = 0;
+                        let endNode = null, endNodeOffset = 0;
+                        
+                        while ((node = walker.nextNode())) {
+                            let len = node.nodeValue.length;
+                            if (!startNode && localIndex < currentIndex + len) {
+                                startNode = node;
+                                startNodeOffset = localIndex - currentIndex;
+                            }
+                            if (!endNode && localIndex + length <= currentIndex + len) {
+                                endNode = node;
+                                endNodeOffset = localIndex + length - currentIndex;
+                                break;
+                            }
+                            currentIndex += len;
+                        }
+                        
+                        // 確保 endNode 也有找到（若單字剛好跨越 node，上面邏輯也會盡可能找）
+                        if (!endNode && startNode) {
+                            endNode = node || startNode;
+                            endNodeOffset = endNode.nodeValue.length;
+                        }
+                        
+                        if (startNode && endNode) {
+                            let range = document.createRange();
+                            range.setStart(startNode, startNodeOffset);
+                            range.setEnd(endNode, endNodeOffset);
+                            
+                            let sel = window.getSelection();
+                            sel.removeAllRanges();
+                            sel.addRange(range);
+                        }
+                    }
+
                     readBtn.onclick = function() {
                         if (!('speechSynthesis' in window)) {
                             alert('您的瀏覽器不支援語音發音功能。');
@@ -753,22 +823,33 @@
                         }
                         if (sentences.length === 0) return;
                         
-                        // 不要用 speakWordTwice，短文只要唸一次就好
                         window.speechSynthesis.cancel();
+                        window.getSelection().removeAllRanges();
                         
-                        var sentence = sentences[currentSentenceIndex];
-                        var utterance = new SpeechSynthesisUtterance(sentence);
+                        var sentenceObj = sentences[currentSentenceIndex];
+                        var utterance = new SpeechSynthesisUtterance(sentenceObj.text);
                         utterance.lang = 'en-US';
                         utterance.rate = 0.9;
                         if (englishFemaleVoice) {
                             utterance.voice = englishFemaleVoice;
                         }
                         
+                        utterance.onboundary = function(event) {
+                            if (event.name === 'word') {
+                                let globalIndex = sentenceObj.startOffset + event.charIndex;
+                                highlightWord(globalIndex, event.charLength);
+                            }
+                        };
+                        
+                        utterance.onend = function() {
+                            window.getSelection().removeAllRanges();
+                        };
+                        
                         window.speechSynthesis.speak(utterance);
                         
                         currentSentenceIndex++;
                         if (currentSentenceIndex >= sentences.length) {
-                            currentSentenceIndex = 0; // 唸完全部後回到第一句
+                            currentSentenceIndex = 0;
                         }
                     };
                     
