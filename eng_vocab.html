@@ -705,6 +705,77 @@
             loadVoices();
             loadGlobalMistakes();
 
+            // 為所有短文閱讀練習新增逐句朗讀按鈕
+            var stories = document.querySelectorAll('.story');
+            stories.forEach(function(storyDiv) {
+                var h3 = storyDiv.querySelector('h3');
+                if (h3 && h3.innerText.includes('短文閱讀練習')) {
+                    h3.style.display = 'flex';
+                    h3.style.alignItems = 'center';
+                    h3.style.gap = '15px';
+                    
+                    var readBtn = document.createElement('button');
+                    readBtn.innerHTML = '🔊 逐句朗讀';
+                    readBtn.style.padding = '5px 12px';
+                    readBtn.style.fontSize = '0.75em';
+                    readBtn.style.backgroundColor = '#3498db';
+                    readBtn.style.color = 'white';
+                    readBtn.style.border = 'none';
+                    readBtn.style.borderRadius = '5px';
+                    readBtn.style.cursor = 'pointer';
+                    readBtn.title = '每次點擊朗讀下一句';
+                    
+                    // 找出所有在 hr 之前的英文 p 段落
+                    var englishText = "";
+                    var children = storyDiv.children;
+                    var passedH3 = false;
+                    for (var i = 0; i < children.length; i++) {
+                        if (children[i] === h3) {
+                            passedH3 = true;
+                            continue;
+                        }
+                        if (children[i].tagName === 'HR') break;
+                        if (passedH3 && children[i].tagName === 'P') {
+                            englishText += children[i].innerText + " ";
+                        }
+                    }
+                    
+                    // 用正則表達式把句子切開 (以 . ? ! 結尾)
+                    var sentences = englishText.match(/[^.!?]+[.!?]+/g) || [englishText];
+                    sentences = sentences.map(s => s.trim()).filter(s => s.length > 0);
+                    
+                    var currentSentenceIndex = 0;
+                    
+                    readBtn.onclick = function() {
+                        if (!('speechSynthesis' in window)) {
+                            alert('您的瀏覽器不支援語音發音功能。');
+                            return;
+                        }
+                        if (sentences.length === 0) return;
+                        
+                        // 不要用 speakWordTwice，短文只要唸一次就好
+                        window.speechSynthesis.cancel();
+                        
+                        var sentence = sentences[currentSentenceIndex];
+                        var utterance = new SpeechSynthesisUtterance(sentence);
+                        utterance.lang = 'en-US';
+                        utterance.rate = 0.9;
+                        if (englishFemaleVoice) {
+                            utterance.voice = englishFemaleVoice;
+                        }
+                        
+                        window.speechSynthesis.speak(utterance);
+                        
+                        currentSentenceIndex++;
+                        if (currentSentenceIndex >= sentences.length) {
+                            currentSentenceIndex = 0; // 唸完全部後回到第一句
+                        }
+                    };
+                    
+                    h3.appendChild(readBtn);
+                }
+            });
+
             var words = document.querySelectorAll('strong.word');
             words.forEach(function(el) {
                 var wordText = el.innerText.trim();
