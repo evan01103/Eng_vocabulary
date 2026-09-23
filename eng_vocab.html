@@ -870,17 +870,21 @@
                         }
                         
                         if (startNode && endNode) {
-                            let range = document.createRange();
-                            range.setStart(startNode, startNodeOffset);
-                            range.setEnd(endNode, endNodeOffset);
-                            
-                            if (typeof CSS !== 'undefined' && CSS.highlights) {
-                                let highlight = new Highlight(range);
-                                CSS.highlights.set("tts-highlight", highlight);
-                            } else {
-                                let sel = window.getSelection();
-                                sel.removeAllRanges();
-                                sel.addRange(range);
+                            try {
+                                let range = document.createRange();
+                                range.setStart(startNode, startNodeOffset);
+                                range.setEnd(endNode, endNodeOffset);
+                                
+                                if (typeof CSS !== 'undefined' && CSS.highlights) {
+                                    let highlight = new Highlight(range);
+                                    CSS.highlights.set("tts-highlight", highlight);
+                                } else {
+                                    let sel = window.getSelection();
+                                    sel.removeAllRanges();
+                                    sel.addRange(range);
+                                }
+                            } catch (e) {
+                                console.error("Highlight error:", e);
                             }
                         }
                     }
@@ -906,10 +910,21 @@
                             utterance.voice = englishFemaleVoice;
                         }
                         
+                        utterance.onstart = function() {
+                            // 先反白整句，以防 onboundary 不支援
+                            highlightWord(sentenceObj.startOffset, sentenceObj.text.length);
+                        };
+                        
                         utterance.onboundary = function(event) {
                             if (event.name === 'word') {
+                                let length = event.charLength;
+                                if (!length) {
+                                    let remaining = sentenceObj.text.substring(event.charIndex);
+                                    let match = remaining.match(/^[^\s\.,!\?]+/);
+                                    length = match ? match[0].length : 1;
+                                }
                                 let globalIndex = sentenceObj.startOffset + event.charIndex;
-                                highlightWord(globalIndex, event.charLength);
+                                highlightWord(globalIndex, length);
                             }
                         };
                         
