@@ -687,7 +687,8 @@
             <div id="quiz-options" style="display: flex; flex-direction: column; gap: 12px;">
                 <!-- 選項會動態產生在這裡 -->
             </div>
-            <button id="start-quiz-btn" onclick="startQuiz()" style="padding: 12px 24px; font-size: 1.1em; background-color: #e67e22; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 25px; font-weight: bold; transition: background-color 0.3s;">🚀 開始測驗</button>
+            <button id="start-quiz-btn" onclick="startQuiz()" style="padding: 12px 24px; font-size: 1.1em; background-color: #e67e22; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 25px; margin-right: 10px; font-weight: bold; transition: background-color 0.3s; display: inline-block;">🚀 開始測驗</button>
+            <button id="start-random10-btn" onclick="startQuiz(true)" style="padding: 12px 24px; font-size: 1.1em; background-color: #9b59b6; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 25px; font-weight: bold; transition: background-color 0.3s; display: inline-block;">🎲 隨機 10 題</button>
             <div id="quiz-result" style="margin-top: 20px; font-weight: bold; font-size: 1.3em; min-height: 30px;"></div>
         </div>
     </div>
@@ -1290,13 +1291,16 @@
             document.getElementById('quiz-options').innerHTML = '';
             document.getElementById('quiz-result').innerText = '';
             document.getElementById('quiz-question').innerText = "準備好了嗎？請點擊下方按鈕開始！";
-            document.getElementById('start-quiz-btn').style.display = "block";
+            document.getElementById('start-quiz-btn').style.display = "inline-block";
             document.getElementById('start-quiz-btn').innerText = "🚀 開始測驗";
             document.getElementById('start-quiz-btn').style.backgroundColor = "#e67e22";
+            let randomBtn = document.getElementById('start-random10-btn');
+            if (randomBtn) randomBtn.style.display = "inline-block";
         }
 
-        function startQuiz() {
+        function startQuiz(isRandom10 = false) {
             const startBtn = document.getElementById('start-quiz-btn');
+            const randomBtn = document.getElementById('start-random10-btn');
             
             if (startBtn.innerText === "🚀 開始測驗" || startBtn.innerText === "🔄 重新測驗錯題") {
                 if (startBtn.innerText === "🔄 重新測驗錯題") {
@@ -1306,6 +1310,10 @@
                     if (filteredList.length === 0) {
                         alert("請至少選擇一個測驗範圍喔！");
                         return;
+                    }
+                    if (isRandom10) {
+                        filteredList.sort(() => Math.random() - 0.5);
+                        filteredList = filteredList.slice(0, 10);
                     }
                     quizQueue = [...filteredList];
                 }
@@ -1325,11 +1333,15 @@
                     document.getElementById('quiz-result').style.color = "#27ae60";
                     startBtn.innerText = "🚀 開始測驗";
                     startBtn.style.backgroundColor = "#e67e22";
+                    startBtn.style.display = "inline-block";
+                    if (randomBtn) randomBtn.style.display = "inline-block";
                 } else {
                     document.getElementById('quiz-result').innerHTML = "您有 " + wrongWords.length + " 個不熟悉的單字：<br><br>" + wrongWords.map(w => w.en + " (" + w.zh + ")").join("<br>");
                     document.getElementById('quiz-result').style.color = "#c0392b";
                     startBtn.innerText = "🔄 重新測驗錯題";
                     startBtn.style.backgroundColor = "#e74c3c";
+                    startBtn.style.display = "inline-block";
+                    if (randomBtn) randomBtn.style.display = "none";
                 }
                 isQuizActive = false;
                 return;
@@ -1339,6 +1351,7 @@
             startBtn.style.backgroundColor = "#3498db";
             // 點擊後隱藏「下一題」按鈕，等使用者答完再顯示
             startBtn.style.display = "none";
+            if (randomBtn) randomBtn.style.display = "none";
             generateQuestion();
         }
 
@@ -1367,7 +1380,7 @@
                     generateMultipleChoice(false);
                 }
             } else if (activeMode === 'dict') {
-                document.getElementById('quiz-question').innerText = "🎧 請聽發音並拼出正確的英文單字：";
+                document.getElementById('quiz-question').innerText = "🎧 請聽發音，拼出正確的英文單字並選擇中文意思：";
                 generateTextInput(true);
             } else if (activeMode === 'spell') {
                 document.getElementById('quiz-question').innerText = "✍️ 「" + currentQuestion.zh + "」的英文是？ (請拼寫)";
@@ -1414,8 +1427,11 @@
             });
         }
 
+        let selectedChineseOpt = null;
+
         function generateTextInput(showAudio) {
             const optionsContainer = document.getElementById('quiz-options');
+            selectedChineseOpt = null;
             
             if (showAudio) {
                 // 播放發音按鈕
@@ -1449,6 +1465,54 @@
             };
             optionsContainer.appendChild(inputField);
 
+            // 產生中文選擇題 (聽寫模式)
+            if (showAudio) {
+                let optionsDiv = document.createElement('div');
+                optionsDiv.style.display = "flex";
+                optionsDiv.style.flexDirection = "column";
+                optionsDiv.style.gap = "8px";
+                optionsDiv.style.marginBottom = "15px";
+
+                let options = [currentQuestion];
+                let filteredList = wordList.filter(w => currentQuizScope.includes(w.lesson));
+                if (filteredList.length === 0) filteredList = wordList;
+                
+                while (options.length < 4 && options.length < filteredList.length) {
+                    let randomOpt = filteredList[Math.floor(Math.random() * filteredList.length)];
+                    if (!options.includes(randomOpt)) {
+                        options.push(randomOpt);
+                    }
+                }
+                options.sort(() => Math.random() - 0.5);
+
+                options.forEach(opt => {
+                    let btn = document.createElement('button');
+                    btn.className = "dict-mc-btn";
+                    btn.style.padding = "10px";
+                    btn.style.fontSize = "1.1em";
+                    btn.style.border = "1px solid #ccc";
+                    btn.style.borderRadius = "8px";
+                    btn.style.backgroundColor = "#f9f9f9";
+                    btn.style.cursor = "pointer";
+                    btn.style.textAlign = "left";
+                    
+                    btn.innerText = opt.zh;
+                    
+                    btn.onclick = function() {
+                        const allBtns = optionsDiv.querySelectorAll('button');
+                        allBtns.forEach(b => {
+                            b.style.backgroundColor = "#f9f9f9";
+                            b.style.borderColor = "#ccc";
+                        });
+                        this.style.backgroundColor = "#e0e0e0";
+                        this.style.borderColor = "#888";
+                        selectedChineseOpt = opt;
+                    };
+                    optionsDiv.appendChild(btn);
+                });
+                optionsContainer.appendChild(optionsDiv);
+            }
+
             // 送出按鈕
             let submitBtn = document.createElement('button');
             submitBtn.innerText = '✅ 送出答案';
@@ -1479,23 +1543,76 @@
             const userAnswer = inputField.value.trim().toLowerCase();
             const resultDiv = document.getElementById('quiz-result');
             
+            const mcBtns = document.querySelectorAll('.dict-mc-btn');
+            const hasMc = mcBtns.length > 0;
+
+            if (hasMc && !selectedChineseOpt) {
+                alert("請選擇一個中文意思喔！");
+                return;
+            }
+
             inputField.disabled = true;
+            if (hasMc) {
+                mcBtns.forEach(b => {
+                    b.disabled = true;
+                    b.style.cursor = "default";
+                });
+            }
             
-            if (userAnswer === currentQuestion.en.toLowerCase()) {
-                resultDiv.innerText = "✅ 拼寫正確！";
+            const spellCorrect = (userAnswer === currentQuestion.en.toLowerCase());
+            const mcCorrect = hasMc ? (selectedChineseOpt.en === currentQuestion.en) : true;
+
+            if (spellCorrect && mcCorrect) {
+                resultDiv.innerText = "✅ 答對了！";
                 resultDiv.style.color = "#27ae60";
                 inputField.style.borderColor = "#2ecc71";
                 inputField.style.backgroundColor = "#d5f5e3";
+                if (hasMc) {
+                    mcBtns.forEach(b => {
+                        if (b.innerText === currentQuestion.zh) {
+                            b.style.backgroundColor = "#d5f5e3";
+                            b.style.borderColor = "#2ecc71";
+                        }
+                    });
+                }
             } else {
-                resultDiv.innerText = `❌ 拼錯了 (沒寫也算錯喔)！正確拼法是：${currentQuestion.en} (${currentQuestion.zh})`;
+                let errorMsg = [];
+                if (!spellCorrect && userAnswer === "") {
+                     errorMsg.push("未輸入單字");
+                } else if (!spellCorrect) {
+                     errorMsg.push("拼寫錯誤");
+                }
+                if (hasMc && !mcCorrect) {
+                     errorMsg.push("中文選擇錯誤");
+                }
+                
+                resultDiv.innerText = `❌ ${errorMsg.join('，')}！\n正確答案：${currentQuestion.en} (${currentQuestion.zh})`;
                 resultDiv.style.color = "#c0392b";
-                inputField.style.borderColor = "#e74c3c";
-                inputField.style.backgroundColor = "#fadbd8";
+                
+                if (!spellCorrect) {
+                    inputField.style.borderColor = "#e74c3c";
+                    inputField.style.backgroundColor = "#fadbd8";
+                } else {
+                    inputField.style.borderColor = "#2ecc71";
+                    inputField.style.backgroundColor = "#d5f5e3";
+                }
+                
+                if (hasMc) {
+                    mcBtns.forEach(b => {
+                        if (b.innerText === currentQuestion.zh) {
+                            b.style.backgroundColor = "#d5f5e3"; 
+                            b.style.borderColor = "#2ecc71";
+                        } else if (selectedChineseOpt && b.innerText === selectedChineseOpt.zh && !mcCorrect) {
+                            b.style.backgroundColor = "#fadbd8"; 
+                            b.style.borderColor = "#e74c3c";
+                        }
+                    });
+                }
                 
                 addMistake(currentQuestion);
             }
             
-            document.getElementById('start-quiz-btn').style.display = "block";
+            document.getElementById('start-quiz-btn').style.display = "inline-block";
         }
 
         function checkAnswer(selected, correct, btnEl) {
@@ -1529,7 +1646,7 @@
                 });
             }
             
-            document.getElementById('start-quiz-btn').style.display = "block";
+            document.getElementById('start-quiz-btn').style.display = "inline-block";
         }
 
         // 翻牌記憶遊戲邏輯
