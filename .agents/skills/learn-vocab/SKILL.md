@@ -45,6 +45,16 @@ For the confirmed list of words, generate the following content in your thought 
 - **Add Content Block**: Insert the new vocabulary content as a new `<div id="Date-YYYYMMDD" class="tabcontent">` block before the `QuizTab` content block.
 - Format the vocabulary as an HTML table (`<thead>` and `<tbody>`). Each English word must be wrapped in `<strong class="word">word</strong>`, followed immediately by a line break and the KK phonetic symbol inside a span: `<br><span style="color:#7f8c8d; font-size:0.9em;">[phonetic]</span>`. This exact structure is required for the Text-to-Speech Javascript to inject the 🔊 button correctly.
 - Add the 150-word short story and the morphology analysis below the table inside a styled `.story` div.
+- **Update Quiz Javascript (`wordList`)**: You MUST update the `const wordList = [...]` array inside the `<script>` tag. Assign a new `lesson` number for the new day, and add all new vocabulary words with this `lesson` number.
+- **Update Quiz Scope Logic**: You MUST insert a new Quiz scope button in the QuizTab UI (e.g. `<button id="scope-6-btn" ...>`). Then, update the `toggleQuizScope` Javascript logic to ensure that the scope check limit (e.g., `currentQuizScope.length === X`) and the loop array (e.g., `[1, 2, ..., X].forEach`) account for the newly added lesson number. Ensure the default state remains that no scopes are selected (`currentQuizScope = []`).
 
-### 5. Completion
+### 5. Retroactive Word Addition (Appending to an existing day)
+If the user requests to add one or more words to an *existing* date (rather than creating a new day), you must:
+1. Insert the new word into the existing vocabulary table.
+2. **Rewrite** the existing short story to naturally incorporate the new word.
+3. Update the existing morphology analysis to include the new word.
+4. Update the Javascript `wordList` to include the new word with the correct, existing `lesson` number.
+
+### 6. Completion
 - Inform the user that the notebook has been updated and encourage them to open `eng_vocab.html` to review their new words, play the memory game, or take the quiz.
+- Ask the user if they would like you to run `git add`, `git commit`, and `git push` (using `BypassSandbox: true` if needed) to backup the changes to GitHub.
