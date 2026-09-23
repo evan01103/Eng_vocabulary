@@ -960,6 +960,34 @@
                 // 將按鈕插入到單字元素的正後方
                 el.parentNode.insertBefore(btn, el.nextSibling);
             });
+            
+            // 為例句加上發音按鈕
+            var exampleTds = document.querySelectorAll('tbody tr td:nth-child(4)');
+            exampleTds.forEach(function(td) {
+                var fullText = td.innerText;
+                var englishText = fullText.split('(')[0].trim();
+                if (englishText && englishText !== "例句 (Example)") { // 排除標題 (雖然 tbody 應該不會有標題)
+                    var btn = document.createElement('button');
+                    btn.className = 'speak-btn';
+                    btn.innerHTML = '🔊';
+                    btn.title = '聆聽例句發音 (女聲)';
+                    btn.onclick = function() {
+                        if (!('speechSynthesis' in window)) {
+                            alert('您的瀏覽器不支援語音發音功能。');
+                            return;
+                        }
+                        window.speechSynthesis.cancel();
+                        let utterance = new SpeechSynthesisUtterance(englishText);
+                        utterance.lang = 'en-US';
+                        utterance.rate = 0.72;
+                        if (englishFemaleVoice) {
+                            utterance.voice = englishFemaleVoice;
+                        }
+                        window.speechSynthesis.speak(utterance);
+                    };
+                    td.appendChild(btn);
+                }
+            });
         });
 
         // 錯題本邏輯
