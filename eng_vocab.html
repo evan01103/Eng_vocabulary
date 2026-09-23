@@ -665,13 +665,13 @@
         
         <div style="margin-bottom: 15px;">
             <strong style="margin-right: 10px; color: #2c3e50;">📚 測驗範圍 (可複選)：</strong>
-            <button id="scope-all-btn" onclick="toggleQuizScope('all')" style="padding: 6px 15px; font-size: 1em; background-color: #e67e22; color: white; border: none; border-radius: 5px; cursor: pointer; margin-right: 5px;">全選</button>
-            <button id="scope-1-btn" onclick="toggleQuizScope(1)" style="padding: 6px 15px; font-size: 1em; background-color: #e67e22; color: white; border: none; border-radius: 5px; cursor: pointer; margin-right: 5px;">9/18</button>
-            <button id="scope-2-btn" onclick="toggleQuizScope(2)" style="padding: 6px 15px; font-size: 1em; background-color: #e67e22; color: white; border: none; border-radius: 5px; cursor: pointer; margin-right: 5px;">9/19</button>
-            <button id="scope-3-btn" onclick="toggleQuizScope(3)" style="padding: 6px 15px; font-size: 1em; background-color: #e67e22; color: white; border: none; border-radius: 5px; cursor: pointer; margin-right: 5px;">9/20</button>
-            <button id="scope-4-btn" onclick="toggleQuizScope(4)" style="padding: 6px 15px; font-size: 1em; background-color: #e67e22; color: white; border: none; border-radius: 5px; cursor: pointer; margin-right: 5px;">9/21</button>
-            <button id="scope-5-btn" onclick="toggleQuizScope(5)" style="padding: 6px 15px; font-size: 1em; background-color: #e67e22; color: white; border: none; border-radius: 5px; cursor: pointer; margin-right: 5px;">9/22</button>
-            <button id="scope-6-btn" onclick="toggleQuizScope(6)" style="padding: 6px 15px; font-size: 1em; background-color: #e67e22; color: white; border: none; border-radius: 5px; cursor: pointer;">9/23</button>
+            <button id="scope-all-btn" onclick="toggleQuizScope('all')" style="padding: 6px 15px; font-size: 1em; background-color: #ecf0f1; color: #333; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; margin-right: 5px;">全選</button>
+            <button id="scope-1-btn" onclick="toggleQuizScope(1)" style="padding: 6px 15px; font-size: 1em; background-color: #ecf0f1; color: #333; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; margin-right: 5px;">9/18</button>
+            <button id="scope-2-btn" onclick="toggleQuizScope(2)" style="padding: 6px 15px; font-size: 1em; background-color: #ecf0f1; color: #333; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; margin-right: 5px;">9/19</button>
+            <button id="scope-3-btn" onclick="toggleQuizScope(3)" style="padding: 6px 15px; font-size: 1em; background-color: #ecf0f1; color: #333; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; margin-right: 5px;">9/20</button>
+            <button id="scope-4-btn" onclick="toggleQuizScope(4)" style="padding: 6px 15px; font-size: 1em; background-color: #ecf0f1; color: #333; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; margin-right: 5px;">9/21</button>
+            <button id="scope-5-btn" onclick="toggleQuizScope(5)" style="padding: 6px 15px; font-size: 1em; background-color: #ecf0f1; color: #333; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; margin-right: 5px;">9/22</button>
+            <button id="scope-6-btn" onclick="toggleQuizScope(6)" style="padding: 6px 15px; font-size: 1em; background-color: #ecf0f1; color: #333; border: 1px solid #ccc; border-radius: 5px; cursor: pointer;">9/23</button>
         </div>
         
         <div style="margin-bottom: 20px;">
@@ -1197,12 +1197,17 @@
             { en: "beautiful", zh: "美麗的", lesson: 5 }, { en: "useful", zh: "有用的", lesson: 5 },
             { en: "wonderful", zh: "絕妙的、精彩的", lesson: 5 }, { en: "peaceful", zh: "和平的、寧靜的", lesson: 5 },
             { en: "skillful", zh: "熟練的、有技巧的", lesson: 5 }, { en: "colorful", zh: "色彩豐富的", lesson: 5 },
-            { en: "painful", zh: "痛苦的、疼痛的", lesson: 5 }
+            { en: "painful", zh: "痛苦的、疼痛的", lesson: 5 },
+            { en: "negative", zh: "負面的、消極的", lesson: 6 }, { en: "talkative", zh: "健談的、多話的", lesson: 6 },
+            { en: "relative", zh: "親戚、相對的", lesson: 6 }, { en: "expensive", zh: "昂貴的", lesson: 6 },
+            { en: "fashionable", zh: "流行的、時尚的", lesson: 6 }, { en: "valuable", zh: "有價值的、寶貴的", lesson: 6 },
+            { en: "available", zh: "可用的、有空的", lesson: 6 }, { en: "probably", zh: "大概、或許", lesson: 6 },
+            { en: "able", zh: "能夠的、有能力的", lesson: 6 }
         ];
 
         let currentQuestion = {};
         let currentQuizMode = 'mc'; // 'mc' for multiple choice, 'dict' for dictation
-        let currentQuizScope = [1, 2, 3, 4, 5]; // 預設全選
+        let currentQuizScope = []; // 預設不選
         
         let quizQueue = [];
         let wrongWords = [];
@@ -1210,22 +1215,21 @@
         
         function toggleQuizScope(scope) {
             if (scope === 'all') {
-                currentQuizScope = [1, 2, 3, 4, 5];
+                if (currentQuizScope.length === 6) {
+                    currentQuizScope = [];
+                } else {
+                    currentQuizScope = [1, 2, 3, 4, 5, 6];
+                }
             } else {
                 if (currentQuizScope.includes(scope)) {
-                    if (currentQuizScope.length > 1) {
-                        currentQuizScope = currentQuizScope.filter(s => s !== scope);
-                    } else {
-                        alert("至少需要選擇一課喔！");
-                        return;
-                    }
+                    currentQuizScope = currentQuizScope.filter(s => s !== scope);
                 } else {
                     currentQuizScope.push(scope);
                 }
             }
             
             // 更新按鈕樣式
-            const isAll = (currentQuizScope.length === 5);
+            const isAll = (currentQuizScope.length === 6);
             let btnAll = document.getElementById('scope-all-btn');
             if (btnAll) {
                 if (isAll) {
@@ -1239,7 +1243,7 @@
                 }
             }
 
-            [1, 2, 3, 4, 5].forEach(s => {
+            [1, 2, 3, 4, 5, 6].forEach(s => {
                 let btn = document.getElementById('scope-' + s + '-btn');
                 if (btn) {
                     if (currentQuizScope.includes(s)) {
@@ -1299,7 +1303,10 @@
                     quizQueue = [...wrongWords];
                 } else {
                     let filteredList = wordList.filter(w => currentQuizScope.includes(w.lesson));
-                    if (filteredList.length === 0) filteredList = wordList;
+                    if (filteredList.length === 0) {
+                        alert("請至少選擇一個測驗範圍喔！");
+                        return;
+                    }
                     quizQueue = [...filteredList];
                 }
                 
