@@ -43,8 +43,30 @@ For the confirmed list of words, generate the following content in your thought 
 - Modify `eng_vocab.html` using the `replace_file_content` tool.
 - **Add Tab Button**: Insert a new tab button (e.g., `<button class="tablinks" onclick="openTab(event, 'Date-YYYYMMDD')">📅 YYYY/M/D</button>`) immediately before the `QuizTab` button.
 - **Add Content Block**: Insert the new vocabulary content as a new `<div id="Date-YYYYMMDD" class="tabcontent">` block before the `QuizTab` content block.
-- Format the vocabulary as an HTML table (`<thead>` and `<tbody>`). Each English word must be wrapped in `<strong class="word">word</strong>`, followed immediately by a line break and the KK phonetic symbol inside a span: `<br><span style="color:#7f8c8d; font-size:0.9em;">[phonetic]</span>`. This exact structure is required for the Text-to-Speech Javascript to inject the 🔊 button correctly.
-- Add the 150-word short story and the morphology analysis below the table inside a styled `.story` div.
+- **Vocabulary Table**: Format the vocabulary as an HTML table with exactly 4 columns. Do NOT add a 5th column for "發音". Combine the English sentence and Chinese translation in the 4th column. Use this exact structure for each row:
+  `<tr><td><strong class="word">word</strong><br><span style="color:#7f8c8d; font-size:0.9em;">[phonetic]</span></td><td>[part_of_speech]</td><td>[chinese_meaning]</td><td>[English sentence with <strong>word</strong>]. ([Chinese translation])</td></tr>`
+- **Short Story Block**: Use this EXACT HTML template for the short story (do not forget the heading and the `<hr>` for translation):
+  ```html
+  <div class="story" style="margin-top: 25px; padding: 20px; background-color: #fff9e6; border-left: 6px solid #f39c12; border-radius: 4px;">
+      <h3 style="margin-top: 0; color: #d35400;">📖 短文閱讀練習</h3>
+      <p style="line-height: 1.6; font-size: 1.1em; color: #444;">[English Story Paragraph 1. Bold the vocabulary words like <strong style="color: #d35400;">word</strong>]</p>
+      <hr style="border: 0; border-top: 1px dashed #ccc; margin: 15px 0;">
+      <p style="margin-bottom: 0; font-size: 0.95em; color: #666; line-height: 1.5;">
+          <strong>💡 中文翻譯參考：</strong><br>[Chinese translation of the story]
+      </p>
+  </div>
+  ```
+- **Morphology Analysis Block**: Use this EXACT HTML template for the morphology analysis:
+  ```html
+  <div class="analysis" style="margin-top: 25px; padding: 20px; background-color: #f4fdf8; border-left: 6px solid #2ecc71; border-radius: 4px;">
+      <h3 style="margin-top: 0; color: #27ae60;">🔍 字根字首字尾歸納</h3>
+      <p style="color: #444; line-height: 1.6;">這組單字主要可以分為 [X] 類字尾：</p>
+      <h4 style="color: #2c3e50; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-top: 20px;">1. [Type 1]</h4>
+      <ul style="line-height: 1.6; color: #444;">
+          <li><strong>word</strong> (explanation ➔ meaning)</li>
+      </ul>
+  </div>
+  ```
 - **Update Quiz Javascript (`wordList`)**: You MUST update the `const wordList = [...]` array inside the `<script>` tag. Assign a new `lesson` number for the new day, and add all new vocabulary words with this `lesson` number.
 - **Update Quiz Scope Logic**: You MUST insert a new Quiz scope button in the QuizTab UI (e.g. `<button id="scope-6-btn" ...>`). Then, update the `toggleQuizScope` Javascript logic to ensure that the scope check limit (e.g., `currentQuizScope.length === X`) and the loop array (e.g., `[1, 2, ..., X].forEach`) account for the newly added lesson number. Ensure the default state remains that no scopes are selected (`currentQuizScope = []`).
 
