@@ -1370,6 +1370,8 @@
             if (randomBtn) randomBtn.style.display = "inline-block";
         }
 
+        let currentQuestionPassed = false;
+
         function startQuiz(isRandom10 = false) {
             const startBtn = document.getElementById('start-quiz-btn');
             const randomBtn = document.getElementById('start-random10-btn');
@@ -1393,6 +1395,11 @@
                 quizQueue.sort(() => Math.random() - 0.5);
                 wrongWords = [];
                 isQuizActive = true;
+            } else {
+                // 點擊下一題時，如果目前的題目還沒答對（或未答完就跳過），才記錄到錯題本
+                if (isQuizActive && currentQuestion && !currentQuestionPassed) {
+                    addMistake(currentQuestion);
+                }
             }
             
             if (quizQueue.length === 0) {
@@ -1421,13 +1428,14 @@
 
             startBtn.innerText = "下一題";
             startBtn.style.backgroundColor = "#3498db";
-            // 點擊後隱藏「下一題」按鈕，等使用者答完再顯示
-            startBtn.style.display = "none";
+            // 永遠顯示「下一題」按鈕
+            startBtn.style.display = "inline-block";
             if (randomBtn) randomBtn.style.display = "none";
             generateQuestion();
         }
 
         function generateQuestion() {
+            currentQuestionPassed = false;
             const optionsContainer = document.getElementById('quiz-options');
             optionsContainer.innerHTML = '';
             document.getElementById('quiz-result').innerText = '';
@@ -1635,6 +1643,7 @@
             const mcCorrect = hasMc ? (selectedChineseOpt.en === currentQuestion.en) : true;
 
             if (spellCorrect && mcCorrect) {
+                currentQuestionPassed = true;
                 resultDiv.innerText = "✅ 答對了！";
                 resultDiv.style.color = "#27ae60";
                 inputField.disabled = true;
@@ -1648,7 +1657,7 @@
                         }
                     });
                 }
-                document.getElementById('start-quiz-btn').style.display = "inline-block";
+                setTimeout(() => { startQuiz(); }, 500);
             } else {
                 let errorMsg = [];
                 if (!spellCorrect && userAnswer === "") {
@@ -1659,9 +1668,6 @@
                 if (hasMc && !mcCorrect) {
                      errorMsg.push("中文選擇錯誤");
                 }
-                
-                // 標記錯題本
-                addMistake(currentQuestion);
                 
                 // 顯示選擇題的正確/錯誤樣式
                 if (hasMc) {
@@ -1683,8 +1689,6 @@
                     resultDiv.innerText = `❌ ${errorMsg.join('，')}！請重新修改拼寫到對為止。`;
                     resultDiv.style.color = "#c0392b";
                     
-                    // 隱藏「下一題」，讓使用者繼續修改拼寫
-                    document.getElementById('start-quiz-btn').style.display = "none";
                     inputField.focus();
                 } else {
                     // 拼寫正確但中文錯誤
@@ -1711,17 +1715,17 @@
             });
 
             if (selected.en === correct.en) {
+                currentQuestionPassed = true;
                 resultDiv.innerText = "✅ 答對了！";
                 resultDiv.style.color = "#27ae60";
                 btnEl.style.backgroundColor = "#d5f5e3"; // 淺綠色
                 btnEl.style.borderColor = "#2ecc71";
+                setTimeout(() => { startQuiz(); }, 500);
             } else {
                 resultDiv.innerText = `❌ 答錯了！正確答案是：${correct.en} (${correct.zh})`;
                 resultDiv.style.color = "#c0392b";
                 btnEl.style.backgroundColor = "#fadbd8"; // 淺紅色
                 btnEl.style.borderColor = "#e74c3c";
-                
-                addMistake(currentQuestion);
                 
                 // 把正確選項標示出來
                 buttons.forEach(b => {
