@@ -1623,7 +1623,7 @@
                 return;
             }
 
-            inputField.disabled = true;
+            // 鎖定選擇題按鈕（中文只能選一次）
             if (hasMc) {
                 mcBtns.forEach(b => {
                     b.disabled = true;
@@ -1637,6 +1637,7 @@
             if (spellCorrect && mcCorrect) {
                 resultDiv.innerText = "✅ 答對了！";
                 resultDiv.style.color = "#27ae60";
+                inputField.disabled = true;
                 inputField.style.borderColor = "#2ecc71";
                 inputField.style.backgroundColor = "#d5f5e3";
                 if (hasMc) {
@@ -1647,6 +1648,7 @@
                         }
                     });
                 }
+                document.getElementById('start-quiz-btn').style.display = "inline-block";
             } else {
                 let errorMsg = [];
                 if (!spellCorrect && userAnswer === "") {
@@ -1658,17 +1660,10 @@
                      errorMsg.push("中文選擇錯誤");
                 }
                 
-                resultDiv.innerText = `❌ ${errorMsg.join('，')}！\n正確答案：${currentQuestion.en} (${currentQuestion.zh})`;
-                resultDiv.style.color = "#c0392b";
+                // 標記錯題本
+                addMistake(currentQuestion);
                 
-                if (!spellCorrect) {
-                    inputField.style.borderColor = "#e74c3c";
-                    inputField.style.backgroundColor = "#fadbd8";
-                } else {
-                    inputField.style.borderColor = "#2ecc71";
-                    inputField.style.backgroundColor = "#d5f5e3";
-                }
-                
+                // 顯示選擇題的正確/錯誤樣式
                 if (hasMc) {
                     mcBtns.forEach(b => {
                         if (b.innerText === currentQuestion.zh) {
@@ -1680,11 +1675,30 @@
                         }
                     });
                 }
-                
-                addMistake(currentQuestion);
+
+                if (!spellCorrect) {
+                    inputField.style.borderColor = "#e74c3c";
+                    inputField.style.backgroundColor = "#fadbd8";
+                    
+                    resultDiv.innerText = `❌ ${errorMsg.join('，')}！請重新修改拼寫到對為止。`;
+                    resultDiv.style.color = "#c0392b";
+                    
+                    // 隱藏「下一題」，讓使用者繼續修改拼寫
+                    document.getElementById('start-quiz-btn').style.display = "none";
+                    inputField.focus();
+                } else {
+                    // 拼寫正確但中文錯誤
+                    inputField.disabled = true;
+                    inputField.style.borderColor = "#2ecc71";
+                    inputField.style.backgroundColor = "#d5f5e3";
+                    
+                    resultDiv.innerText = `❌ 中文選擇錯誤！\n正確答案：${currentQuestion.en} (${currentQuestion.zh})`;
+                    resultDiv.style.color = "#c0392b";
+                    
+                    // 拼對了就可以進入下一題
+                    document.getElementById('start-quiz-btn').style.display = "inline-block";
+                }
             }
-            
-            document.getElementById('start-quiz-btn').style.display = "inline-block";
         }
 
         function checkAnswer(selected, correct, btnEl) {
