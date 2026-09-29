@@ -41,9 +41,14 @@ For the confirmed list of words, generate the following content in your thought 
 
 ### 4. HTML Injection
 - Modify `eng_vocab.html` using the `replace_file_content` tool.
-- **Add Tab Button**: Insert a new tab button (e.g., `<button class="tablinks" onclick="openTab(event, 'Date-YYYYMMDD')">📅 YYYY/M/D</button>`) immediately before the `QuizTab` button.
+- **Add Tab Button**: Insert a new tab button (e.g., `<button class="tablinks" onclick="openTab(event, 'Date-YYYYMMDD')">📅 Y/M/D</button>`) immediately before the `QuizTab` button. **Do NOT** include page numbers (like "1-98頁") in the tab button name itself; keep it clean (e.g. `📅 9/29`).
 - **Add Content Block**: Insert the new vocabulary content as a new `<div id="Date-YYYYMMDD" class="tabcontent">` block before the `QuizTab` content block.
-- **Vocabulary Table**: Format the vocabulary as an HTML table with exactly 4 columns. Do NOT add a 5th column for "發音". Combine the English sentence and Chinese translation in the 4th column. Use this exact structure for each row:
+- **Section Heading**: Inside the content block, use exactly this format for the heading (incorporating the page range if the user provides one):
+  `<h2>單字清單 <span style="font-size: 0.7em; color: #7f8c8d;">(1-XX頁)</span></h2>`
+- **Vocabulary Table**: Use a plain `<table>` tag without any inline styles (like `style="width:100%..."`). Format the vocabulary as an HTML table with exactly 4 columns. 
+  - The headers must be exactly: `<th>單字</th>`, `<th>詞性</th>`, `<th>中文意思</th>`, `<th>例句 (Example)</th>`.
+  - Do NOT add a 5th column for "發音". Combine the English sentence and Chinese translation in the 4th column. 
+  - Use this exact structure for each row:
   `<tr><td><strong class="word">word</strong><br><span style="color:#7f8c8d; font-size:0.9em;">[phonetic]</span></td><td>[part_of_speech]</td><td>[chinese_meaning]</td><td>[English sentence with <strong>word</strong>]. ([Chinese translation])</td></tr>`
 - **Short Story Block**: Use this EXACT HTML template for the short story (do not forget the heading and the `<hr>` for translation):
   ```html
