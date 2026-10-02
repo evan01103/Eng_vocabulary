@@ -1333,7 +1333,7 @@
                     h3.style.gap = '15px';
                     
                     var readBtn = document.createElement('button');
-                    readBtn.innerHTML = '🔊 逐句朗讀';
+                    readBtn.innerHTML = '🔊 全篇朗讀';
                     readBtn.style.padding = '5px 12px';
                     readBtn.style.fontSize = '0.75em';
                     readBtn.style.backgroundColor = '#3498db';
@@ -1341,7 +1341,7 @@
                     readBtn.style.border = 'none';
                     readBtn.style.borderRadius = '5px';
                     readBtn.style.cursor = 'pointer';
-                    readBtn.title = '每次點擊朗讀下一句';
+                    readBtn.title = '點擊朗讀整篇短文';
                     
                     // 找出所有在 hr 之前的英文 p 段落
                     var paragraphs = [];
@@ -1381,8 +1381,6 @@
                     if (sentences.length === 0) {
                         sentences.push({ text: fullText.trim(), startOffset: 0 });
                     }
-                    
-                    var currentSentenceIndex = 0;
                     
                     function highlightWord(globalIndex, length) {
                         let targetP = null;
@@ -1443,12 +1441,11 @@
                         }
                     }
 
-                    readBtn.onclick = function() {
+                    function playUtterance(text, baseOffset) {
                         if (!('speechSynthesis' in window)) {
                             alert('您的瀏覽器不支援語音發音功能。');
                             return;
                         }
-                        if (sentences.length === 0) return;
                         
                         window.speechSynthesis.cancel();
                         if (typeof CSS !== 'undefined' && CSS.highlights) {
@@ -1456,8 +1453,7 @@
                         }
                         window.getSelection().removeAllRanges();
                         
-                        var sentenceObj = sentences[currentSentenceIndex];
-                        var utterance = new SpeechSynthesisUtterance(sentenceObj.text);
+                        var utterance = new SpeechSynthesisUtterance(text);
                         utterance.lang = 'en-US';
                         utterance.rate = 0.72;
                         if (englishFemaleVoice) {
@@ -1465,19 +1461,18 @@
                         }
                         
                         utterance.onstart = function() {
-                            // 先反白整句，以防 onboundary 不支援
-                            highlightWord(sentenceObj.startOffset, sentenceObj.text.length);
+                            highlightWord(baseOffset, text.length);
                         };
                         
                         utterance.onboundary = function(event) {
                             if (event.name === 'word') {
                                 let length = event.charLength;
                                 if (!length) {
-                                    let remaining = sentenceObj.text.substring(event.charIndex);
+                                    let remaining = text.substring(event.charIndex);
                                     let match = remaining.match(/^[^\s\.,!\?]+/);
                                     length = match ? match[0].length : 1;
                                 }
-                                let globalIndex = sentenceObj.startOffset + event.charIndex;
+                                let globalIndex = baseOffset + event.charIndex;
                                 highlightWord(globalIndex, length);
                             }
                         };
@@ -1490,12 +1485,77 @@
                         };
                         
                         window.speechSynthesis.speak(utterance);
-                        
-                        currentSentenceIndex++;
-                        if (currentSentenceIndex >= sentences.length) {
-                            currentSentenceIndex = 0;
+                    }
+
+                    readBtn.onclick = function() {
+                        if (fullText.trim().length > 0) {
+                            playUtterance(fullText, 0);
                         }
                     };
+
+                    paragraphs.forEach(function(p) {
+                        p.style.cursor = 'pointer';
+                        p.title = '點擊句子即可聆聽發音';
+                        p.addEventListener('click', function(e) {
+                            let range;
+                            if (document.caretPositionFromPoint) {
+                                let pos = document.caretPositionFromPoint(e.clientX, e.clientY);
+                                if (pos && pos.offsetNode) {
+                                    range = document.createRange();
+                                    range.setStart(pos.offsetNode, pos.offset);
+                                    range.collapse(true);
+                                }
+                            } else if (document.caretRangeFromPoint) {
+                                range = document.caretRangeFromPoint(e.clientX, e.clientY);
+                            }
+                            
+                            if (range) {
+                                let clickedNode = range.startContainer;
+                                if (clickedNode.nodeType !== Node.TEXT_NODE) {
+                                    return;
+                                }
+                                
+                                let localOffset = range.startOffset;
+                                let walker = document.createTreeWalker(p, NodeFilter.SHOW_TEXT, null, false);
+                                let node;
+                                let charCount = 0;
+                                let found = false;
+                                while ((node = walker.nextNode())) {
+                                    if (node === clickedNode) {
+                                        charCount += localOffset;
+                                        found = true;
+                                        break;
+                                    }
+                                    charCount += node.nodeValue.length;
+                                }
+                                
+                                if (found) {
+                                    let pStart = 0;
+                                    for (let i = 0; i < paragraphOffsets.length; i++) {
+                                        if (paragraphOffsets[i].p === p) {
+                                            pStart = paragraphOffsets[i].start;
+                                            break;
+                                        }
+                                    }
+                                    let globalOffset = pStart + charCount;
+                                    
+                                    let targetSentence = null;
+                                    for (let i = 0; i < sentences.length; i++) {
+                                        let sStart = sentences[i].startOffset;
+                                        let sEnd = sStart + sentences[i].text.length;
+                                        if (globalOffset >= sStart && globalOffset <= sEnd) {
+                                            targetSentence = sentences[i];
+                                            break;
+                                        }
+                                    }
+                                    
+                                    if (targetSentence) {
+                                        playUtterance(targetSentence.text, targetSentence.startOffset);
+                                    }
+                                }
+                            }
+                        });
+                    });
                     
                     h3.appendChild(readBtn);
                 }
