@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
@@ -24,6 +24,42 @@
         h1 {
             text-align: center;
             color: #2c3e50;
+        }
+                /* Style the month tab */
+        .month-tab {
+            overflow: hidden;
+            border: 1px solid #ccc;
+            background-color: #d0d0d0;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+        }
+        .month-tab button {
+            background-color: inherit;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 24px;
+            transition: 0.3s;
+            font-size: 16px;
+            font-weight: bold;
+            color: #444;
+            border-right: 1px solid #ccc;
+        }
+        .month-tab button:hover {
+            background-color: #bbb;
+        }
+        .month-tab button.active {
+            background-color: #e0e0e0;
+            border-bottom: 2px solid #3498db;
+        }
+        .monthcontent {
+            display: none;
+        }
+        
+        /* Adjust normal tab radius */
+        .tab {
+            border-radius: 0 0 0 0;
+            border-top: none;
         }
         /* Style the tab */
         .tab {
@@ -177,6 +213,13 @@
 
     <h1>📚 英語單字學習簿</h1>
 
+    <div class="month-tab">
+    <button class="monthlinks active" onclick="openMonth(event, '9月')">9月份</button>
+    <button class="monthlinks" onclick="openMonth(event, '10月')">10月份</button>
+    <button class="monthlinks" onclick="openMonth(event, '其他功能')">其他功能</button>
+</div>
+
+<div id="9月" class="monthcontent" style="display: block;">
     <div class="tab">
         <button class="tablinks active" onclick="openTab(event, 'Date-20260918')">📅 9/18</button>
         <button class="tablinks" onclick="openTab(event, 'Date-20260919')">📅 9/19</button>
@@ -190,16 +233,28 @@
         <button class="tablinks" onclick="openTab(event, 'Date-20260927')">📅 9/27</button>
         <button class="tablinks" onclick="openTab(event, 'Date-20260929')">📅 9/29</button>
         <button class="tablinks" onclick="openTab(event, 'Date-20260930')">📅 9/30</button>
+    </div>
+</div>
+
+<div id="10月" class="monthcontent" style="display: none;">
+    <div class="tab">
         <button class="tablinks" onclick="openTab(event, 'Date-20261001')">📅 10/1</button>
         <button class="tablinks" onclick="openTab(event, 'Date-20261002')">📅 10/2</button>
         <button class="tablinks" onclick="openTab(event, 'Date-20261003')">📅 10/3</button>
         <button class="tablinks" onclick="openTab(event, 'Date-20261004')">📅 10/4</button>
         <button class="tablinks" onclick="openTab(event, 'Date-20261005')">📅 10/5</button>
+        <button class="tablinks" onclick="openTab(event, 'Date-20261007')">📅 10/7</button>
+    </div>
+</div>
+
+<div id="其他功能" class="monthcontent" style="display: none;">
+    <div class="tab">
         <button class="tablinks" style="color: #e67e22; font-weight: bold;" onclick="openTab(event, 'QuizTab')">📝 自我測驗</button>
         <button class="tablinks" style="color: #c0392b; font-weight: bold;" onclick="openTab(event, 'MistakeTab')">⚠️ 錯題本</button>
         <button class="tablinks" style="color: #8e44ad; font-weight: bold;" onclick="openTab(event, 'GameTab')">🎮 翻牌遊戲</button>
         <button class="tablinks" onclick="openTab(event, 'NewTabTemplate')">➕ 新增課程</button>
     </div>
+</div>
 
     <!-- 2026/9/18 分頁內容 -->
     <div id="Date-20260918" class="tabcontent" style="display: block;">
@@ -1331,7 +1386,99 @@
         </div>
     </div>
 
-    <div id="QuizTab" class="tabcontent">
+    <!-- 2026/10/7 分頁內容 -->
+    <div id="Date-20261007" class="tabcontent" style="display: none;">
+        <h2>單字清單 <span style="font-size:0.6em; color:#888;">(page 1-114)</span></h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>單字</th>
+                    <th>詞性</th>
+                    <th>中文意思</th>
+                    <th>例句</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong class="word">American</strong><br><span style="color:#7f8c8d; font-size:0.9em;">[əˋmɛrɪkən]</span></td>
+                    <td>n./adj.</td>
+                    <td>美國人；美國的</td>
+                    <td>He is a famous American actor. (他是一位著名的美國演員。)</td>
+                </tr>
+                <tr>
+                    <td><strong class="word">painter</strong><br><span style="color:#7f8c8d; font-size:0.9em;">[ˋpentɚ]</span></td>
+                    <td>n.</td>
+                    <td>畫家</td>
+                    <td>The painter drew a beautiful picture. (這位畫家畫了一幅美麗的圖畫。)</td>
+                </tr>
+                <tr>
+                    <td><strong class="word">winner</strong><br><span style="color:#7f8c8d; font-size:0.9em;">[ˋwɪnɚ]</span></td>
+                    <td>n.</td>
+                    <td>贏家，獲勝者</td>
+                    <td>She is the winner of the race. (她是這場比賽的獲勝者。)</td>
+                </tr>
+                <tr>
+                    <td><strong class="word">hunter</strong><br><span style="color:#7f8c8d; font-size:0.9em;">[ˋhʌntɚ]</span></td>
+                    <td>n.</td>
+                    <td>獵人</td>
+                    <td>The hunter walked into the dark forest. (獵人走進了黑暗的森林。)</td>
+                </tr>
+                <tr>
+                    <td><strong class="word">owner</strong><br><span style="color:#7f8c8d; font-size:0.9em;">[ˋonɚ]</span></td>
+                    <td>n.</td>
+                    <td>擁有者，主人</td>
+                    <td>He is the owner of this pet shop. (他是這家寵物店的主人。)</td>
+                </tr>
+                <tr>
+                    <td><strong class="word">magician</strong><br><span style="color:#7f8c8d; font-size:0.9em;">[məˋdʒɪʃən]</span></td>
+                    <td>n.</td>
+                    <td>魔術師</td>
+                    <td>The magician pulled a rabbit out of his hat. (魔術師從帽子裡變出一隻兔子。)</td>
+                </tr>
+                <tr>
+                    <td><strong class="word">twenty</strong><br><span style="color:#7f8c8d; font-size:0.9em;">[ˋtwɛntɪ]</span></td>
+                    <td>n./adj.</td>
+                    <td>二十</td>
+                    <td>I have twenty dollars in my pocket. (我口袋裡有二十元。)</td>
+                </tr>
+                <tr>
+                    <td><strong class="word">thirteen</strong><br><span style="color:#7f8c8d; font-size:0.9em;">[θɝˋtin]</span></td>
+                    <td>n./adj.</td>
+                    <td>十三</td>
+                    <td>My little brother is thirteen years old. (我的弟弟十三歲。)</td>
+                </tr>
+            </tbody>
+        </table>
+
+                <div class="story" style="margin-top: 25px; padding: 20px; background-color: #fff9e6; border-left: 6px solid #f39c12; border-radius: 4px;">
+            <h3 style="margin-top: 0; color: #d35400;">📖 短文閱讀練習</h3>
+            <p style="line-height: 1.6; font-size: 1.1em; color: #444;">Once upon a time, there was a young <strong>American</strong> boy who wanted to be a great <strong>painter</strong>. He painted pictures of animals, trees, and people every day. One day, a famous <strong>magician</strong> saw his paintings and said, "If you want to be a true <strong>winner</strong>, you must find the magic brush hidden in the forest."</p>
+            <p style="line-height: 1.6; font-size: 1.1em; color: #444;">The boy walked for <strong>thirteen</strong> days until he met an old <strong>hunter</strong> and his dog. The <strong>hunter</strong> asked, "Are you the new <strong>owner</strong> of the magic brush?" The boy said yes. The old man smiled and gave him a beautiful brush. When the boy returned home, he painted <strong>twenty</strong> amazing pictures. Everyone loved his art, and he became the best artist in the country. He learned that with hard work and a little magic, any dream can come true.</p>
+        </div>
+
+        <div class="analysis" style="margin-top: 25px; padding: 20px; background-color: #f4fdf8; border-left: 6px solid #2ecc71; border-radius: 4px;">
+            <h3 style="margin-top: 0; color: #27ae60;">🔍 字根字首字尾歸納</h3>
+            <p style="color: #444; line-height: 1.6;"><strong>後綴 -er (表示「做...的人」)</strong></p>
+            <ul style="color: #444; line-height: 1.6;">
+                <li><strong>painter</strong> (paint 畫 + er ➔ 畫家)</li>
+                <li><strong>winner</strong> (win 贏 + er ➔ 贏家)</li>
+                <li><strong>hunter</strong> (hunt 狩獵 + er ➔ 獵人)</li>
+                <li><strong>owner</strong> (own 擁有 + er ➔ 主人/擁有者)</li>
+            </ul>
+            <p style="color: #444; line-height: 1.6;"><strong>其他職業/人物後綴 (-ian, -an)</strong></p>
+            <ul style="color: #444; line-height: 1.6;">
+                <li><strong>magician</strong> (magic 魔術 + ian ➔ 魔術師)</li>
+                <li><strong>American</strong> (America 美國 + n ➔ 美國人)</li>
+            </ul>
+            <p style="color: #444; line-height: 1.6;"><strong>數字後綴</strong></p>
+            <ul style="color: #444; line-height: 1.6;">
+                <li><strong>-teen (十幾)</strong>: <strong>thirteen</strong> (十三)</li>
+                <li><strong>-ty (幾十)</strong>: <strong>twenty</strong> (二十)</li>
+            </ul>
+        </div>
+    </div>
+
+    <div id="QuizTab" class="tabcontent">ent">
         <h2>📝 綜合自我測驗</h2>
         <p>請先選擇要測驗的範圍，再選擇測驗模式！</p>
         
@@ -1424,6 +1571,19 @@
     </div>
 
     <script>
+                function openMonth(evt, monthName) {
+            var i, monthcontent, monthlinks;
+            monthcontent = document.getElementsByClassName("monthcontent");
+            for (i = 0; i < monthcontent.length; i++) {
+                monthcontent[i].style.display = "none";
+            }
+            monthlinks = document.getElementsByClassName("monthlinks");
+            for (i = 0; i < monthlinks.length; i++) {
+                monthlinks[i].className = monthlinks[i].className.replace(" active", "");
+            }
+            document.getElementById(monthName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
         function openTab(evt, tabName) {
             var i, tabcontent, tablinks;
             
@@ -2572,3 +2732,8 @@
     </script>
 </body>
 </html>
+
+
+
+
+
