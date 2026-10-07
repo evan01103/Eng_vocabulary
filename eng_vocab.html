@@ -1502,6 +1502,7 @@
             <button id="scope-15-btn" onclick="toggleQuizScope(15)" style="padding: 6px 15px; font-size: 1em; background-color: #ecf0f1; color: #333; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; margin-right: 5px;">10/3</button>
             <button id="scope-16-btn" onclick="toggleQuizScope(16)" style="padding: 6px 15px; font-size: 1em; background-color: #ecf0f1; color: #333; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; margin-right: 5px;">10/4</button>
             <button id="scope-17-btn" onclick="toggleQuizScope(17)" style="padding: 6px 15px; font-size: 1em; background-color: #ecf0f1; color: #333; border: 1px solid #ccc; border-radius: 5px; cursor: pointer;">10/5</button>
+              <button id="scope-18-btn" onclick="toggleQuizScope(18)" style="padding: 6px 15px; font-size: 1em; background-color: #ecf0f1; color: #333; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; margin-right: 5px;">10/7</button>
         </div>
         
         <div style="margin-bottom: 20px;">
@@ -2160,7 +2161,11 @@
             { en: "waiter", zh: "服務生", lesson: 17 }, { en: "shopkeeper", zh: "店主、老闆", lesson: 17 },
             { en: "stranger", zh: "陌生人", lesson: 17 }, { en: "lawyer", zh: "律師", lesson: 17 },
             { en: "teenager", zh: "青少年", lesson: 17 }, { en: "driver", zh: "司機", lesson: 17 },
-            { en: "writer", zh: "作家", lesson: 17 }, { en: "actor", zh: "演員", lesson: 17 }
+            { en: "writer", zh: "作家", lesson: 17 }, { en: "actor", zh: "演員", lesson: 17 },
+              { en: "American", zh: "美國人；美國的", lesson: 18 }, { en: "painter", zh: "畫家", lesson: 18 },
+              { en: "winner", zh: "贏家，獲勝者", lesson: 18 }, { en: "hunter", zh: "獵人", lesson: 18 },
+              { en: "owner", zh: "擁有者，主人", lesson: 18 }, { en: "magician", zh: "魔術師", lesson: 18 },
+              { en: "twenty", zh: "二十", lesson: 18 }, { en: "thirteen", zh: "十三", lesson: 18 }
         ];
 
         let currentQuestion = {};
@@ -2173,10 +2178,10 @@
         
         function toggleQuizScope(scope) {
             if (scope === 'all') {
-                if (currentQuizScope.length === 17) {
+                if (currentQuizScope.length === 18) {
                     currentQuizScope = [];
                 } else {
-                    currentQuizScope = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
+                    currentQuizScope = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
                 }
             } else {
                 if (currentQuizScope.includes(scope)) {
@@ -2187,7 +2192,7 @@
             }
             
             // 更新按鈕樣式
-            const isAll = (currentQuizScope.length === 17);
+            const isAll = (currentQuizScope.length === 18);
             let btnAll = document.getElementById('scope-all-btn');
             if (btnAll) {
                 if (isAll) {
@@ -2201,7 +2206,7 @@
                 }
             }
 
-            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17].forEach(s => {
+            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18].forEach(s => {
                 let btn = document.getElementById('scope-' + s + '-btn');
                 if (btn) {
                     if (currentQuizScope.includes(s)) {
@@ -2732,6 +2737,7 @@
     </script>
 </body>
 </html>
+
 
 
 
