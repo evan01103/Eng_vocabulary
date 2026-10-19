@@ -41,7 +41,7 @@ For the confirmed list of words, generate the following content in your thought 
 
 ### 4. HTML Injection
 - Modify `eng_vocab.html` using the `replace_file_content` tool.
-- **Add Tab Button**: Insert a new tab button (e.g., `<button class="tablinks" onclick="openTab(event, 'Date-YYYYMMDD')">📅 Y/M/D</button>`) immediately before the `QuizTab` button. **Do NOT** include page numbers (like "1-98頁") in the tab button name itself; keep it clean (e.g. `📅 9/29`).
+- **Add Tab Button**: Insert a new tab button (e.g., `<button class="tablinks" onclick="openTab(event, 'Date-YYYYMMDD')">📅 M/D (第X課)</button>`) in the appropriate month tab. **Do NOT** include page numbers (like "1-98頁") in the tab button name itself; include the lesson number next to the date (e.g. `📅 10/19 (第27課)`).
 - **Add Content Block**: Insert the new vocabulary content as a new `<div id="Date-YYYYMMDD" class="tabcontent">` block before the `QuizTab` content block.
 - **Section Heading**: Inside the content block, use exactly this format for the heading (incorporating the page range if the user provides one):
   `<h2>單字清單 <span style="font-size: 0.7em; color: #7f8c8d;">(1-XX頁)</span></h2>`
@@ -73,7 +73,7 @@ For the confirmed list of words, generate the following content in your thought 
   </div>
   ```
 - **Update Quiz Javascript (`wordList`)**: You MUST update the `const wordList = [...]` array inside the `<script>` tag. Assign a new `lesson` number for the new day, and add all new vocabulary words with this `lesson` number.
-- **Update Quiz Scope Logic**: You MUST insert a new Quiz scope button in the QuizTab UI (e.g. `<button id="scope-6-btn" ...>`). Then, update the `toggleQuizScope` Javascript logic to ensure that the scope check limit (e.g., `currentQuizScope.length === X`) and the loop array (e.g., `[1, 2, ..., X].forEach`) account for the newly added lesson number. Ensure the default state remains that no scopes are selected (`currentQuizScope = []`).
+- **Update Quiz Scope Logic**: You MUST insert a new Quiz scope button in the QuizTab UI including the lesson number next to the date (e.g. `<button id="scope-27-btn" ...>10/19 (第27課)</button>`). Then, update the `toggleQuizScope` Javascript logic to ensure that the scope check limit (e.g., `currentQuizScope.length === X`) and the loop array (e.g., `[1, 2, ..., X].forEach`) account for the newly added lesson number. Ensure the default state remains that no scopes are selected (`currentQuizScope = []`).
 
 ### 5. Retroactive Word Addition (Appending to an existing day)
 If the user requests to add one or more words to an *existing* date (rather than creating a new day), you must:
