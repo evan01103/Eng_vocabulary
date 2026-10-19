@@ -2581,7 +2581,7 @@
                 }
             });
 
-            var words = document.querySelectorAll('strong.word');
+            var words = document.querySelectorAll('table:not(#mistakes-table) strong.word');
             words.forEach(function(el) {
                 var wordText = el.innerText.trim();
                 var btn = document.createElement('button');
@@ -2596,7 +2596,7 @@
             });
             
             // 為例句加上發音按鈕
-            var exampleTds = document.querySelectorAll('tbody tr td:nth-child(4)');
+            var exampleTds = document.querySelectorAll('table:not(#mistakes-table) tbody tr td:nth-child(4)');
             exampleTds.forEach(function(td) {
                 var fullText = td.innerText;
                 var englishText = fullText.split('(')[0].trim();
