@@ -72,7 +72,7 @@ For the confirmed list of words, generate the following content in your thought 
       </ul>
   </div>
   ```
-- **Update Quiz Javascript (`wordList`)**: You MUST update the `const wordList = [...]` array inside the `<script>` tag. Assign a new `lesson` number for the new day, and add all new vocabulary words with this `lesson` number.
+- **Update Quiz Javascript (`wordList`)**: You MUST update the `const wordList = [...]` array inside the `<script>` tag. Assign a new `lesson` number for the new day, and add all new vocabulary words with `en`, `pos` (part of speech), `zh`, and this `lesson` number (e.g., `{ en: "word", pos: "n.", zh: "中文", lesson: X }`).
 - **Update Quiz Scope Logic**: You MUST insert a new Quiz scope button in the QuizTab UI including the lesson number next to the date (e.g. `<button id="scope-27-btn" ...>10/19 (第27課)</button>`). Then, update the `toggleQuizScope` Javascript logic to ensure that the scope check limit (e.g., `currentQuizScope.length === X`) and the loop array (e.g., `[1, 2, ..., X].forEach`) account for the newly added lesson number. Ensure the default state remains that no scopes are selected (`currentQuizScope = []`).
 
 ### 5. Retroactive Word Addition (Appending to an existing day)

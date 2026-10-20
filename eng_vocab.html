@@ -2935,155 +2935,155 @@
 
         // 測驗功能邏輯
         const wordList = [
-            { en: "computer", zh: "電腦", lesson: 1 }, { en: "complain", zh: "抱怨", lesson: 1 },
-            { en: "command", zh: "命令、指揮", lesson: 1 }, { en: "comment", zh: "評論、註解", lesson: 1 },
-            { en: "complete", zh: "完成、完整的", lesson: 1 }, { en: "compare", zh: "比較", lesson: 1 },
-            { en: "company", zh: "公司、陪伴", lesson: 1 }, { en: "minute", zh: "分鐘", lesson: 1 },
-            { en: "minor", zh: "次要的、較小的", lesson: 1 }, { en: "minus", zh: "減去、負的", lesson: 1 },
-            { en: "include", zh: "包含、包括", lesson: 2 }, { en: "improve", zh: "改善、提高", lesson: 2 },
-            { en: "problem", zh: "問題、難題", lesson: 2 }, { en: "promise", zh: "承諾、保證", lesson: 2 },
-            { en: "pronounce", zh: "發音", lesson: 2 }, { en: "emphasize", zh: "強調", lesson: 2 },
-            { en: "realize", zh: "意識到、實現", lesson: 2 }, { en: "apologize", zh: "道歉", lesson: 2 },
-            { en: "famous", zh: "著名的", lesson: 2 }, { en: "delicious", zh: "美味的", lesson: 2 },
-            { en: "dangerous", zh: "危險的", lesson: 3 }, { en: "terrible", zh: "可怕的、糟糕的", lesson: 3 },
-            { en: "precious", zh: "珍貴的", lesson: 3 },
-            { en: "humorous", zh: "幽默的", lesson: 3 }, { en: "jealous", zh: "嫉妒的", lesson: 3 },
-            { en: "nervous", zh: "緊張的", lesson: 3 }, { en: "personal", zh: "個人的、私人的", lesson: 3 },
-            { en: "equal", zh: "平等的、相等的", lesson: 3 }, { en: "central", zh: "中央的、核心的", lesson: 3 },
-            { en: "local", zh: "當地的、本地的", lesson: 3 },
-            { en: "terrible", zh: "糟糕的、可怕的", lesson: 4 }, { en: "possible", zh: "可能的", lesson: 4 },
-            { en: "impossible", zh: "不可能的", lesson: 4 }, { en: "terrific", zh: "極好的", lesson: 4 },
-            { en: "horrible", zh: "可怕的、糟透的", lesson: 4 }, { en: "responsible", zh: "負責任的", lesson: 4 },
-            { en: "student", zh: "學生", lesson: 4 }, { en: "excellent", zh: "優秀的、傑出的", lesson: 4 },
-            { en: "ancient", zh: "古代的、古老的", lesson: 4 }, { en: "patient", zh: "有耐心的、病人", lesson: 4 },
-            { en: "foolish", zh: "愚蠢的、傻的", lesson: 4 },
-            { en: "beautiful", zh: "美麗的", lesson: 5 }, { en: "useful", zh: "有用的", lesson: 5 },
-            { en: "wonderful", zh: "絕妙的、精彩的", lesson: 5 }, { en: "peaceful", zh: "和平的、寧靜的", lesson: 5 },
-            { en: "skillful", zh: "熟練的、有技巧的", lesson: 5 }, { en: "colorful", zh: "色彩豐富的", lesson: 5 },
-            { en: "painful", zh: "痛苦的、疼痛的", lesson: 5 },
-            { en: "negative", zh: "負面的、消極的", lesson: 6 }, { en: "talkative", zh: "健談的、多話的", lesson: 6 },
-            { en: "relative", zh: "親戚、相對的", lesson: 6 }, { en: "expensive", zh: "昂貴的", lesson: 6 },
-            { en: "fashionable", zh: "流行的、時尚的", lesson: 6 }, { en: "valuable", zh: "有價值的、寶貴的", lesson: 6 },
-            { en: "available", zh: "可用的、有空的", lesson: 6 }, { en: "probably", zh: "大概、或許", lesson: 6 },
-            { en: "able", zh: "能夠的、有能力的", lesson: 6 },
-            { en: "excited", zh: "感到興奮的", lesson: 7 }, { en: "scared", zh: "感到害怕的", lesson: 7 },
-            { en: "bored", zh: "感到無聊的", lesson: 7 }, { en: "surprised", zh: "感到驚訝的", lesson: 7 },
-            { en: "married", zh: "已婚的", lesson: 7 }, { en: "tired", zh: "感到疲倦的", lesson: 7 },
-            { en: "interested", zh: "感興趣的", lesson: 7 }, { en: "crowded", zh: "擁擠的", lesson: 7 },
-            { en: "freedom", zh: "自由", lesson: 7 }, { en: "kingdom", zh: "王國", lesson: 7 },
-            { en: "patience", zh: "耐心", lesson: 8 }, { en: "experience", zh: "經驗", lesson: 8 },
-            { en: "question", zh: "問題", lesson: 8 }, { en: "vacation", zh: "假期", lesson: 8 },
-            { en: "pollution", zh: "污染", lesson: 8 }, { en: "discuss", zh: "討論", lesson: 8 },
-            { en: "discussion", zh: "討論", lesson: 8 }, { en: "decide", zh: "決定", lesson: 8 },
-            { en: "decision", zh: "決定", lesson: 8 }, { en: "attention", zh: "注意力", lesson: 8 },
-            { en: "operation", zh: "運作；手術", lesson: 8 },
-            { en: "backward", zh: "向後的、落後的", lesson: 9 }, { en: "forward", zh: "向前的", lesson: 9 },
-            { en: "toward", zh: "向、朝", lesson: 9 }, { en: "waitress", zh: "女服務生", lesson: 9 },
-            { en: "actress", zh: "女演員", lesson: 9 }, { en: "princess", zh: "公主", lesson: 9 },
-            { en: "environment", zh: "環境", lesson: 10 }, { en: "instrument", zh: "樂器、儀器", lesson: 10 },
-            { en: "government", zh: "政府", lesson: 10 }, { en: "basement", zh: "地下室", lesson: 10 },
-            { en: "advertisement", zh: "廣告", lesson: 10 }, { en: "society", zh: "社會", lesson: 10 }, { en: "safety", zh: "安全", lesson: 10 },
-            { en: "shorts", zh: "短褲", lesson: 11 }, { en: "woods", zh: "樹林", lesson: 11 },
-            { en: "meeting", zh: "會議", lesson: 11 }, { en: "building", zh: "建築物", lesson: 11 },
-            { en: "wedding", zh: "婚禮", lesson: 11 }, { en: "meaning", zh: "意義、意思", lesson: 11 },
-            { en: "parking lot", zh: "停車場", lesson: 11 }, { en: "feeling", zh: "感覺", lesson: 11 },
-            { en: "beginning", zh: "開始", lesson: 11 }, { en: "lightning", zh: "閃電", lesson: 11 },
-            { en: "bakery", zh: "麵包店", lesson: 11 }, { en: "scenery", zh: "風景", lesson: 11 },
-            { en: "crazy", zh: "瘋狂的", lesson: 12 }, { en: "funny", zh: "有趣的、滑稽的", lesson: 12 },
-            { en: "noisy", zh: "吵鬧的", lesson: 12 }, { en: "sunny", zh: "晴朗的", lesson: 12 },
-            { en: "rainy", zh: "下雨的", lesson: 12 }, { en: "windy", zh: "多風的", lesson: 12 },
-            { en: "angry", zh: "生氣的", lesson: 12 }, { en: "hungry", zh: "飢餓的", lesson: 12 },
-            { en: "snowy", zh: "下雪的", lesson: 12 }, { en: "lucky", zh: "幸運的", lesson: 12 },
-            { en: "yummy", zh: "美味的", lesson: 12 },
-            { en: "cloudy", zh: "多雲的", lesson: 13 }, { en: "healthy", zh: "健康的", lesson: 13 },
-            { en: "lazy", zh: "懶惰的", lesson: 13 }, { en: "foggy", zh: "有霧的", lesson: 13 },
-            { en: "stormy", zh: "暴風雨的", lesson: 13 }, { en: "greedy", zh: "貪婪的", lesson: 13 },
-            { en: "skinny", zh: "極瘦的、皮包骨的", lesson: 13 }, { en: "stingy", zh: "吝嗇的、小氣的", lesson: 13 },
-            { en: "marker", zh: "麥克筆、記號筆", lesson: 14 }, { en: "ruler", zh: "尺、統治者", lesson: 14 },
-            { en: "sweater", zh: "毛衣", lesson: 14 }, { en: "error", zh: "錯誤", lesson: 14 },
-            { en: "eraser", zh: "橡皮擦", lesson: 14 }, { en: "drawer", zh: "抽屜", lesson: 14 },
-            { en: "dryer", zh: "烘乾機、吹風機", lesson: 14 }, { en: "slippers", zh: "拖鞋", lesson: 14 },
-            { en: "locker", zh: "置物櫃", lesson: 14 }, { en: "heater", zh: "暖氣機", lesson: 14 },
-            { en: "printer", zh: "印表機", lesson: 15 }, { en: "freezer", zh: "冷凍庫", lesson: 15 },
-            { en: "hanger", zh: "衣架", lesson: 15 }, { en: "saucer", zh: "茶托、碟子", lesson: 15 },
-            { en: "dentist", zh: "牙醫", lesson: 15 }, { en: "scientist", zh: "科學家", lesson: 15 },
-            { en: "artist", zh: "藝術家", lesson: 15 }, { en: "journalist", zh: "記者", lesson: 15 },
-            { en: "vendor", zh: "小販", lesson: 15 }, { en: "sailor", zh: "水手", lesson: 15 },
-            { en: "player", zh: "玩家、球員", lesson: 16 }, { en: "singer", zh: "歌手", lesson: 16 },
-            { en: "worker", zh: "工人", lesson: 16 }, { en: "farmer", zh: "農夫", lesson: 16 },
-            { en: "officer", zh: "官員、警官", lesson: 16 }, { en: "leader", zh: "領導者", lesson: 16 },
-            { en: "doctor", zh: "醫生", lesson: 16 }, { en: "teacher", zh: "老師", lesson: 16 },
-            { en: "engineer", zh: "工程師", lesson: 16 }, { en: "reporter", zh: "記者", lesson: 16 },
-            { en: "soldier", zh: "士兵", lesson: 16 },
-            { en: "visitor", zh: "訪客", lesson: 17 }, { en: "foreigner", zh: "外國人", lesson: 17 },
-            { en: "waiter", zh: "服務生", lesson: 17 }, { en: "shopkeeper", zh: "店主、老闆", lesson: 17 },
-            { en: "stranger", zh: "陌生人", lesson: 17 }, { en: "lawyer", zh: "律師", lesson: 17 },
-            { en: "teenager", zh: "青少年", lesson: 17 }, { en: "driver", zh: "司機", lesson: 17 },
-            { en: "writer", zh: "作家", lesson: 17 }, { en: "actor", zh: "演員", lesson: 17 },
-              { en: "American", zh: "美國人；美國的", lesson: 18 }, { en: "painter", zh: "畫家", lesson: 18 },
-              { en: "winner", zh: "贏家，獲勝者", lesson: 18 }, { en: "hunter", zh: "獵人", lesson: 18 },
-              { en: "owner", zh: "擁有者，主人", lesson: 18 }, { en: "magician", zh: "魔術師", lesson: 18 },
-              { en: "twenty", zh: "二十", lesson: 18 }, { en: "thirteen", zh: "十三", lesson: 18 },
-            { en: "share", zh: "分享、份額", lesson: 19 }, { en: "shake", zh: "搖動、握手", lesson: 19 },
-            { en: "grape", zh: "葡萄", lesson: 19 }, { en: "shape", zh: "形狀、塑造", lesson: 19 },
-            { en: "goose", zh: "鵝", lesson: 19 }, { en: "choose", zh: "選擇", lesson: 19 },
-            { en: "full", zh: "滿的、飽的", lesson: 19 }, { en: "pull", zh: "拉、拖", lesson: 19 },
-            { en: "should", zh: "應該", lesson: 19 }, { en: "shoulder", zh: "肩膀", lesson: 19 },
-            { en: "goat", zh: "山羊", lesson: 20 }, { en: "goal", zh: "目標、球門", lesson: 20 },
-            { en: "join", zh: "加入、參加", lesson: 20 }, { en: "coin", zh: "硬幣", lesson: 20 },
-            { en: "thin", zh: "瘦的、薄的", lesson: 20 }, { en: "think", zh: "想、認為", lesson: 20 },
-            { en: "grade", zh: "年級、成績", lesson: 20 }, { en: "trade", zh: "交易、交換", lesson: 20 },
-            { en: "humble", zh: "謙虛的", lesson: 20 }, { en: "humid", zh: "潮濕的", lesson: 20 },
-            { en: "habit", zh: "習慣", lesson: 21 }, { en: "rabbit", zh: "兔子", lesson: 21 },
-            { en: "catch", zh: "接住、抓住、趕上", lesson: 21 }, { en: "watch", zh: "觀看、手錶", lesson: 21 },
-            { en: "gas", zh: "氣體、瓦斯、汽油", lesson: 21 }, { en: "grass", zh: "草、草地", lesson: 21 },
-            { en: "January", zh: "一月", lesson: 21 }, { en: "February", zh: "二月", lesson: 21 },
-            { en: "leg", zh: "腿", lesson: 21 }, { en: "egg", zh: "蛋", lesson: 21 },
-            { en: "bite", zh: "咬", lesson: 22 }, { en: "bitter", zh: "有苦味的、痛苦的", lesson: 22 },
-            { en: "guess", zh: "猜測", lesson: 22 }, { en: "guest", zh: "客人、賓客", lesson: 22 },
-            { en: "much", zh: "許多的、非常", lesson: 22 }, { en: "such", zh: "如此的、這樣的", lesson: 22 },
-            { en: "order", zh: "命令、點餐、順序", lesson: 22 }, { en: "ordinary", zh: "普通的、平凡的", lesson: 22 },
-            { en: "second", zh: "第二的、秒", lesson: 22 }, { en: "secondary", zh: "次要的、中等的", lesson: 22 },
-            { en: "buy", zh: "買、購買", lesson: 23 }, { en: "guy", zh: "傢伙、朋友、人", lesson: 23 },
-            { en: "green", zh: "綠色的、生疏的", lesson: 23 }, { en: "screen", zh: "螢幕、遮蔽", lesson: 23 },
-            { en: "then", zh: "然後、那時", lesson: 23 }, { en: "than", zh: "比、比較", lesson: 23 },
-            { en: "star", zh: "星星、明星", lesson: 23 }, { en: "start", zh: "開始、出發", lesson: 23 },
-            { en: "shoe", zh: "鞋子", lesson: 23 }, { en: "toe", zh: "腳趾、鞋尖", lesson: 23 },
-            { en: "top", zh: "頂端、最高的", lesson: 24 }, { en: "toy", zh: "玩具", lesson: 24 },
-            { en: "great", zh: "很棒的、偉大的", lesson: 24 }, { en: "greet", zh: "問候、迎接", lesson: 24 },
-            { en: "young", zh: "年輕的、幼小的", lesson: 24 }, { en: "youth", zh: "青春、年輕人", lesson: 24 },
-            { en: "four", zh: "四", lesson: 24 }, { en: "flour", zh: "麵粉", lesson: 24 },
-            { en: "lantern", zh: "燈籠、提燈", lesson: 24 }, { en: "pattern", zh: "圖案、模式", lesson: 24 },
-            { en: "bag", zh: "袋子、書包", lesson: 25 }, { en: "bad", zh: "壞的、糟糕的", lesson: 25 },
-            { en: "strong", zh: "強壯的、堅固的", lesson: 25 }, { en: "string", zh: "線、細繩", lesson: 25 },
-            { en: "simple", zh: "簡單的、樸素的", lesson: 25 }, { en: "sample", zh: "樣品、試用品", lesson: 25 },
-            { en: "since", zh: "自從、既然", lesson: 25 }, { en: "sincere", zh: "真誠的、誠摯的", lesson: 25 },
-            { en: "swing", zh: "搖擺、鞦韆", lesson: 25 }, { en: "wing", zh: "翅膀、機翼", lesson: 25 },
-            { en: "over", zh: "在…上方、越過", lesson: 25 }, { en: "oven", zh: "烤箱、烤爐", lesson: 25 },
-            { en: "above", zh: "在…上面、高於", lesson: 25 }, { en: "stove", zh: "爐子、瓦斯爐", lesson: 25 },
-            { en: "future", zh: "未來、將來", lesson: 26 }, { en: "culture", zh: "文化、教養", lesson: 26 },
-            { en: "lip", zh: "嘴唇", lesson: 26 }, { en: "lid", zh: "蓋子、眼瞼", lesson: 26 },
-            { en: "next", zh: "下一個的、隔壁", lesson: 26 }, { en: "nest", zh: "鳥巢、窩", lesson: 26 },
-            { en: "race", zh: "比賽、賽跑", lesson: 26 }, { en: "trace", zh: "痕跡、蹤跡", lesson: 26 },
-            { en: "root", zh: "根、根源", lesson: 26 }, { en: "roof", zh: "屋頂、車頂", lesson: 26 },
-            { en: "cook", zh: "煮飯、廚師", lesson: 27 }, { en: "cookie", zh: "餅乾", lesson: 27 },
-            { en: "duck", zh: "鴨子", lesson: 27 }, { en: "truck", zh: "卡車、貨車", lesson: 27 },
-            { en: "love", zh: "愛、喜愛", lesson: 27 }, { en: "lovely", zh: "可愛的、美好的", lesson: 27 },
-            { en: "true", zh: "真實的、正確的", lesson: 27 }, { en: "truth", zh: "真相、事實", lesson: 27 },
-            { en: "pocket", zh: "口袋", lesson: 27 }, { en: "bucket", zh: "水桶、桶子", lesson: 27 },
-            { en: "brother", zh: "兄弟", lesson: 27 }, { en: "bother", zh: "打擾、煩擾", lesson: 27 },
-            { en: "hip", zh: "臀部、髖部", lesson: 27 }, { en: "hippo", zh: "河馬", lesson: 27 },
-            { en: "silent", zh: "安靜的、沉默的", lesson: 27 }, { en: "silence", zh: "寂靜、沉默", lesson: 27 },
-            { en: "rub", zh: "摩擦、搓揉", lesson: 27 }, { en: "rubber", zh: "橡膠、橡皮擦", lesson: 27 },
-            { en: "gather", zh: "聚集、收集", lesson: 27 }, { en: "rather", zh: "相當、寧可", lesson: 27 },
-            { en: "weather", zh: "天氣、氣象", lesson: 28 }, { en: "whether", zh: "是否、無論", lesson: 28 },
-            { en: "energy", zh: "能量、精力", lesson: 28 }, { en: "energetic", zh: "精力充沛的", lesson: 28 },
-            { en: "get", zh: "得到、取得", lesson: 28 }, { en: "forget", zh: "忘記、遺忘", lesson: 28 },
-            { en: "father", zh: "父親、爸爸", lesson: 28 }, { en: "mother", zh: "母親、媽媽", lesson: 28 },
-            { en: "rice", zh: "米、米飯", lesson: 28 }, { en: "price", zh: "價格、價錢", lesson: 28 },
-            { en: "choice", zh: "選擇、抉擇", lesson: 28 }, { en: "voice", zh: "聲音、嗓音", lesson: 28 },
-            { en: "other", zh: "其他的、另外的", lesson: 28 }, { en: "another", zh: "另一個的、再一個的", lesson: 28 },
-            { en: "police", zh: "警察、警方", lesson: 28 }
+            { en: "computer", pos: "n.", zh: "電腦", lesson: 1 }, { en: "complain", pos: "v.", zh: "抱怨", lesson: 1 },
+            { en: "command", pos: "v./n.", zh: "命令、指揮", lesson: 1 }, { en: "comment", pos: "n./v.", zh: "評論、註解", lesson: 1 },
+            { en: "complete", pos: "v./adj.", zh: "完成、完整的", lesson: 1 }, { en: "compare", pos: "v.", zh: "比較", lesson: 1 },
+            { en: "company", pos: "n.", zh: "公司、陪伴", lesson: 1 }, { en: "minute", pos: "n.", zh: "分鐘", lesson: 1 },
+            { en: "minor", pos: "adj.", zh: "次要的、較小的", lesson: 1 }, { en: "minus", pos: "prep./n./adj.", zh: "減去、負的", lesson: 1 },
+            { en: "include", pos: "v.", zh: "包含、包括", lesson: 2 }, { en: "improve", pos: "v.", zh: "改善、提高", lesson: 2 },
+            { en: "problem", pos: "n.", zh: "問題、難題", lesson: 2 }, { en: "promise", pos: "v./n.", zh: "承諾、保證", lesson: 2 },
+            { en: "pronounce", pos: "v.", zh: "發音", lesson: 2 }, { en: "emphasize", pos: "v.", zh: "強調", lesson: 2 },
+            { en: "realize", pos: "v.", zh: "意識到、實現", lesson: 2 }, { en: "apologize", pos: "v.", zh: "道歉", lesson: 2 },
+            { en: "famous", pos: "adj.", zh: "著名的", lesson: 2 }, { en: "delicious", pos: "adj.", zh: "美味的", lesson: 2 },
+            { en: "dangerous", pos: "adj.", zh: "危險的", lesson: 3 }, { en: "terrible", pos: "adj.", zh: "可怕的、糟糕的", lesson: 3 },
+            { en: "precious", pos: "adj.", zh: "珍貴的", lesson: 3 },
+            { en: "humorous", pos: "adj.", zh: "幽默的", lesson: 3 }, { en: "jealous", pos: "adj.", zh: "嫉妒的", lesson: 3 },
+            { en: "nervous", pos: "adj.", zh: "緊張的", lesson: 3 }, { en: "personal", pos: "adj.", zh: "個人的、私人的", lesson: 3 },
+            { en: "equal", pos: "adj.", zh: "平等的、相等的", lesson: 3 }, { en: "central", pos: "adj.", zh: "中央的、核心的", lesson: 3 },
+            { en: "local", pos: "adj.", zh: "當地的、本地的", lesson: 3 },
+            { en: "terrible", pos: "adj.", zh: "糟糕的、可怕的", lesson: 4 }, { en: "possible", pos: "adj.", zh: "可能的", lesson: 4 },
+            { en: "impossible", pos: "adj.", zh: "不可能的", lesson: 4 }, { en: "terrific", pos: "adj.", zh: "極好的", lesson: 4 },
+            { en: "horrible", pos: "adj.", zh: "可怕的、糟透的", lesson: 4 }, { en: "responsible", pos: "adj.", zh: "負責任的", lesson: 4 },
+            { en: "student", pos: "n.", zh: "學生", lesson: 4 }, { en: "excellent", pos: "adj.", zh: "優秀的、傑出的", lesson: 4 },
+            { en: "ancient", pos: "adj.", zh: "古代的、古老的", lesson: 4 }, { en: "patient", pos: "adj. / n.", zh: "有耐心的、病人", lesson: 4 },
+            { en: "foolish", pos: "adj.", zh: "愚蠢的、傻的", lesson: 4 },
+            { en: "beautiful", pos: "adj.", zh: "美麗的", lesson: 5 }, { en: "useful", pos: "adj.", zh: "有用的", lesson: 5 },
+            { en: "wonderful", pos: "adj.", zh: "絕妙的、精彩的", lesson: 5 }, { en: "peaceful", pos: "adj.", zh: "和平的、寧靜的", lesson: 5 },
+            { en: "skillful", pos: "adj.", zh: "熟練的、有技巧的", lesson: 5 }, { en: "colorful", pos: "adj.", zh: "色彩豐富的", lesson: 5 },
+            { en: "painful", pos: "adj.", zh: "痛苦的、疼痛的", lesson: 5 },
+            { en: "negative", pos: "adj.", zh: "負面的、消極的", lesson: 6 }, { en: "talkative", pos: "adj.", zh: "健談的、多話的", lesson: 6 },
+            { en: "relative", pos: "n. / adj.", zh: "親戚、相對的", lesson: 6 }, { en: "expensive", pos: "adj.", zh: "昂貴的", lesson: 6 },
+            { en: "fashionable", pos: "adj.", zh: "流行的、時尚的", lesson: 6 }, { en: "valuable", pos: "adj.", zh: "有價值的、寶貴的", lesson: 6 },
+            { en: "available", pos: "adj.", zh: "可用的、有空的", lesson: 6 }, { en: "probably", pos: "adv.", zh: "大概、或許", lesson: 6 },
+            { en: "able", pos: "adj.", zh: "能夠的、有能力的", lesson: 6 },
+            { en: "excited", pos: "adj.", zh: "感到興奮的", lesson: 7 }, { en: "scared", pos: "adj.", zh: "感到害怕的", lesson: 7 },
+            { en: "bored", pos: "adj.", zh: "感到無聊的", lesson: 7 }, { en: "surprised", pos: "adj.", zh: "感到驚訝的", lesson: 7 },
+            { en: "married", pos: "adj.", zh: "已婚的", lesson: 7 }, { en: "tired", pos: "adj.", zh: "感到疲倦的", lesson: 7 },
+            { en: "interested", pos: "adj.", zh: "感興趣的", lesson: 7 }, { en: "crowded", pos: "adj.", zh: "擁擠的", lesson: 7 },
+            { en: "freedom", pos: "n.", zh: "自由", lesson: 7 }, { en: "kingdom", pos: "n.", zh: "王國", lesson: 7 },
+            { en: "patience", pos: "n.", zh: "耐心", lesson: 8 }, { en: "experience", pos: "n.", zh: "經驗", lesson: 8 },
+            { en: "question", pos: "n.", zh: "問題", lesson: 8 }, { en: "vacation", pos: "n.", zh: "假期", lesson: 8 },
+            { en: "pollution", pos: "n.", zh: "污染", lesson: 8 }, { en: "discuss", pos: "v.", zh: "討論", lesson: 8 },
+            { en: "discussion", pos: "n.", zh: "討論", lesson: 8 }, { en: "decide", pos: "v.", zh: "決定", lesson: 8 },
+            { en: "decision", pos: "n.", zh: "決定", lesson: 8 }, { en: "attention", pos: "n.", zh: "注意力", lesson: 8 },
+            { en: "operation", pos: "n.", zh: "運作；手術", lesson: 8 },
+            { en: "backward", pos: "adj./adv.", zh: "向後的、落後的", lesson: 9 }, { en: "forward", pos: "adj./adv.", zh: "向前的", lesson: 9 },
+            { en: "toward", pos: "prep.", zh: "向、朝", lesson: 9 }, { en: "waitress", pos: "n.", zh: "女服務生", lesson: 9 },
+            { en: "actress", pos: "n.", zh: "女演員", lesson: 9 }, { en: "princess", pos: "n.", zh: "公主", lesson: 9 },
+            { en: "environment", pos: "n.", zh: "環境", lesson: 10 }, { en: "instrument", pos: "n.", zh: "樂器、儀器", lesson: 10 },
+            { en: "government", pos: "n.", zh: "政府", lesson: 10 }, { en: "basement", pos: "n.", zh: "地下室", lesson: 10 },
+            { en: "advertisement", pos: "n.", zh: "廣告", lesson: 10 }, { en: "society", pos: "n.", zh: "社會", lesson: 10 }, { en: "safety", pos: "n.", zh: "安全", lesson: 10 },
+            { en: "shorts", pos: "n.", zh: "短褲", lesson: 11 }, { en: "woods", pos: "n.", zh: "樹林", lesson: 11 },
+            { en: "meeting", pos: "n.", zh: "會議", lesson: 11 }, { en: "building", pos: "n.", zh: "建築物", lesson: 11 },
+            { en: "wedding", pos: "n.", zh: "婚禮", lesson: 11 }, { en: "meaning", pos: "n.", zh: "意義、意思", lesson: 11 },
+            { en: "parking lot", pos: "n.", zh: "停車場", lesson: 11 }, { en: "feeling", pos: "n.", zh: "感覺", lesson: 11 },
+            { en: "beginning", pos: "n.", zh: "開始", lesson: 11 }, { en: "lightning", pos: "n.", zh: "閃電", lesson: 11 },
+            { en: "bakery", pos: "n.", zh: "麵包店", lesson: 11 }, { en: "scenery", pos: "n.", zh: "風景", lesson: 11 },
+            { en: "crazy", pos: "adj.", zh: "瘋狂的", lesson: 12 }, { en: "funny", pos: "adj.", zh: "有趣的、滑稽的", lesson: 12 },
+            { en: "noisy", pos: "adj.", zh: "吵鬧的", lesson: 12 }, { en: "sunny", pos: "adj.", zh: "晴朗的", lesson: 12 },
+            { en: "rainy", pos: "adj.", zh: "下雨的", lesson: 12 }, { en: "windy", pos: "adj.", zh: "多風的", lesson: 12 },
+            { en: "angry", pos: "adj.", zh: "生氣的", lesson: 12 }, { en: "hungry", pos: "adj.", zh: "飢餓的", lesson: 12 },
+            { en: "snowy", pos: "adj.", zh: "下雪的", lesson: 12 }, { en: "lucky", pos: "adj.", zh: "幸運的", lesson: 12 },
+            { en: "yummy", pos: "adj.", zh: "美味的", lesson: 12 },
+            { en: "cloudy", pos: "adj.", zh: "多雲的", lesson: 13 }, { en: "healthy", pos: "adj.", zh: "健康的", lesson: 13 },
+            { en: "lazy", pos: "adj.", zh: "懶惰的", lesson: 13 }, { en: "foggy", pos: "adj.", zh: "有霧的", lesson: 13 },
+            { en: "stormy", pos: "adj.", zh: "暴風雨的", lesson: 13 }, { en: "greedy", pos: "adj.", zh: "貪婪的", lesson: 13 },
+            { en: "skinny", pos: "adj.", zh: "極瘦的、皮包骨的", lesson: 13 }, { en: "stingy", pos: "adj.", zh: "吝嗇的、小氣的", lesson: 13 },
+            { en: "marker", pos: "n.", zh: "麥克筆、記號筆", lesson: 14 }, { en: "ruler", pos: "n.", zh: "尺、統治者", lesson: 14 },
+            { en: "sweater", pos: "n.", zh: "毛衣", lesson: 14 }, { en: "error", pos: "n.", zh: "錯誤", lesson: 14 },
+            { en: "eraser", pos: "n.", zh: "橡皮擦", lesson: 14 }, { en: "drawer", pos: "n.", zh: "抽屜", lesson: 14 },
+            { en: "dryer", pos: "n.", zh: "烘乾機、吹風機", lesson: 14 }, { en: "slippers", pos: "n.", zh: "拖鞋", lesson: 14 },
+            { en: "locker", pos: "n.", zh: "置物櫃", lesson: 14 }, { en: "heater", pos: "n.", zh: "暖氣機", lesson: 14 },
+            { en: "printer", pos: "n.", zh: "印表機", lesson: 15 }, { en: "freezer", pos: "n.", zh: "冷凍庫", lesson: 15 },
+            { en: "hanger", pos: "n.", zh: "衣架", lesson: 15 }, { en: "saucer", pos: "n.", zh: "茶托、碟子", lesson: 15 },
+            { en: "dentist", pos: "n.", zh: "牙醫", lesson: 15 }, { en: "scientist", pos: "n.", zh: "科學家", lesson: 15 },
+            { en: "artist", pos: "n.", zh: "藝術家", lesson: 15 }, { en: "journalist", pos: "n.", zh: "記者", lesson: 15 },
+            { en: "vendor", pos: "n.", zh: "小販", lesson: 15 }, { en: "sailor", pos: "n.", zh: "水手", lesson: 15 },
+            { en: "player", pos: "n.", zh: "玩家、球員", lesson: 16 }, { en: "singer", pos: "n.", zh: "歌手", lesson: 16 },
+            { en: "worker", pos: "n.", zh: "工人", lesson: 16 }, { en: "farmer", pos: "n.", zh: "農夫", lesson: 16 },
+            { en: "officer", pos: "n.", zh: "官員、警官", lesson: 16 }, { en: "leader", pos: "n.", zh: "領導者", lesson: 16 },
+            { en: "doctor", pos: "n.", zh: "醫生", lesson: 16 }, { en: "teacher", pos: "n.", zh: "老師", lesson: 16 },
+            { en: "engineer", pos: "n.", zh: "工程師", lesson: 16 }, { en: "reporter", pos: "n.", zh: "記者", lesson: 16 },
+            { en: "soldier", pos: "n.", zh: "士兵", lesson: 16 },
+            { en: "visitor", pos: "n.", zh: "訪客", lesson: 17 }, { en: "foreigner", pos: "n.", zh: "外國人", lesson: 17 },
+            { en: "waiter", pos: "n.", zh: "服務生", lesson: 17 }, { en: "shopkeeper", pos: "n.", zh: "店主、老闆", lesson: 17 },
+            { en: "stranger", pos: "n.", zh: "陌生人", lesson: 17 }, { en: "lawyer", pos: "n.", zh: "律師", lesson: 17 },
+            { en: "teenager", pos: "n.", zh: "青少年", lesson: 17 }, { en: "driver", pos: "n.", zh: "司機", lesson: 17 },
+            { en: "writer", pos: "n.", zh: "作家", lesson: 17 }, { en: "actor", pos: "n.", zh: "演員", lesson: 17 },
+              { en: "American", pos: "n./adj.", zh: "美國人；美國的", lesson: 18 }, { en: "painter", pos: "n.", zh: "畫家", lesson: 18 },
+              { en: "winner", pos: "n.", zh: "贏家，獲勝者", lesson: 18 }, { en: "hunter", pos: "n.", zh: "獵人", lesson: 18 },
+              { en: "owner", pos: "n.", zh: "擁有者，主人", lesson: 18 }, { en: "magician", pos: "n.", zh: "魔術師", lesson: 18 },
+              { en: "twenty", pos: "n./adj.", zh: "二十", lesson: 18 }, { en: "thirteen", pos: "n./adj.", zh: "十三", lesson: 18 },
+            { en: "share", pos: "v., n.", zh: "分享、份額", lesson: 19 }, { en: "shake", pos: "v., n.", zh: "搖動、握手", lesson: 19 },
+            { en: "grape", pos: "n.", zh: "葡萄", lesson: 19 }, { en: "shape", pos: "n., v.", zh: "形狀、塑造", lesson: 19 },
+            { en: "goose", pos: "n.", zh: "鵝", lesson: 19 }, { en: "choose", pos: "v.", zh: "選擇", lesson: 19 },
+            { en: "full", pos: "adj.", zh: "滿的、飽的", lesson: 19 }, { en: "pull", pos: "v., n.", zh: "拉、拖", lesson: 19 },
+            { en: "should", pos: "aux.", zh: "應該", lesson: 19 }, { en: "shoulder", pos: "n.", zh: "肩膀", lesson: 19 },
+            { en: "goat", pos: "n.", zh: "山羊", lesson: 20 }, { en: "goal", pos: "n.", zh: "目標、球門", lesson: 20 },
+            { en: "join", pos: "v.", zh: "加入、參加", lesson: 20 }, { en: "coin", pos: "n.", zh: "硬幣", lesson: 20 },
+            { en: "thin", pos: "adj.", zh: "瘦的、薄的", lesson: 20 }, { en: "think", pos: "v.", zh: "想、認為", lesson: 20 },
+            { en: "grade", pos: "n.", zh: "年級、成績", lesson: 20 }, { en: "trade", pos: "v., n.", zh: "交易、交換", lesson: 20 },
+            { en: "humble", pos: "adj.", zh: "謙虛的", lesson: 20 }, { en: "humid", pos: "adj.", zh: "潮濕的", lesson: 20 },
+            { en: "habit", pos: "n.", zh: "習慣", lesson: 21 }, { en: "rabbit", pos: "n.", zh: "兔子", lesson: 21 },
+            { en: "catch", pos: "v.", zh: "接住、抓住、趕上", lesson: 21 }, { en: "watch", pos: "v., n.", zh: "觀看、手錶", lesson: 21 },
+            { en: "gas", pos: "n.", zh: "氣體、瓦斯、汽油", lesson: 21 }, { en: "grass", pos: "n.", zh: "草、草地", lesson: 21 },
+            { en: "January", pos: "n.", zh: "一月", lesson: 21 }, { en: "February", pos: "n.", zh: "二月", lesson: 21 },
+            { en: "leg", pos: "n.", zh: "腿", lesson: 21 }, { en: "egg", pos: "n.", zh: "蛋", lesson: 21 },
+            { en: "bite", pos: "v., n.", zh: "咬", lesson: 22 }, { en: "bitter", pos: "adj.", zh: "有苦味的、痛苦的", lesson: 22 },
+            { en: "guess", pos: "v., n.", zh: "猜測", lesson: 22 }, { en: "guest", pos: "n.", zh: "客人、賓客", lesson: 22 },
+            { en: "much", pos: "adj., adv., pron.", zh: "許多的、非常", lesson: 22 }, { en: "such", pos: "adj., pron.", zh: "如此的、這樣的", lesson: 22 },
+            { en: "order", pos: "v., n.", zh: "命令、點餐、順序", lesson: 22 }, { en: "ordinary", pos: "adj.", zh: "普通的、平凡的", lesson: 22 },
+            { en: "second", pos: "adj., n.", zh: "第二的、秒", lesson: 22 }, { en: "secondary", pos: "adj.", zh: "次要的、中等的", lesson: 22 },
+            { en: "buy", pos: "v.", zh: "買、購買", lesson: 23 }, { en: "guy", pos: "n.", zh: "傢伙、朋友、人", lesson: 23 },
+            { en: "green", pos: "adj., n.", zh: "綠色的、生疏的", lesson: 23 }, { en: "screen", pos: "n., v.", zh: "螢幕、遮蔽", lesson: 23 },
+            { en: "then", pos: "adv.", zh: "然後、那時", lesson: 23 }, { en: "than", pos: "prep., conj.", zh: "比、比較", lesson: 23 },
+            { en: "star", pos: "n., v.", zh: "星星、明星", lesson: 23 }, { en: "start", pos: "v., n.", zh: "開始、出發", lesson: 23 },
+            { en: "shoe", pos: "n.", zh: "鞋子", lesson: 23 }, { en: "toe", pos: "n.", zh: "腳趾、鞋尖", lesson: 23 },
+            { en: "top", pos: "n., adj.", zh: "頂端、最高的", lesson: 24 }, { en: "toy", pos: "n.", zh: "玩具", lesson: 24 },
+            { en: "great", pos: "adj.", zh: "很棒的、偉大的", lesson: 24 }, { en: "greet", pos: "v.", zh: "問候、迎接", lesson: 24 },
+            { en: "young", pos: "adj.", zh: "年輕的、幼小的", lesson: 24 }, { en: "youth", pos: "n.", zh: "青春、年輕人", lesson: 24 },
+            { en: "four", pos: "n., adj.", zh: "四", lesson: 24 }, { en: "flour", pos: "n.", zh: "麵粉", lesson: 24 },
+            { en: "lantern", pos: "n.", zh: "燈籠、提燈", lesson: 24 }, { en: "pattern", pos: "n.", zh: "圖案、模式", lesson: 24 },
+            { en: "bag", pos: "n.", zh: "袋子、書包", lesson: 25 }, { en: "bad", pos: "adj.", zh: "壞的、糟糕的", lesson: 25 },
+            { en: "strong", pos: "adj.", zh: "強壯的、堅固的", lesson: 25 }, { en: "string", pos: "n.", zh: "線、細繩", lesson: 25 },
+            { en: "simple", pos: "adj.", zh: "簡單的、樸素的", lesson: 25 }, { en: "sample", pos: "n.", zh: "樣品、試用品", lesson: 25 },
+            { en: "since", pos: "prep., conj.", zh: "自從、既然", lesson: 25 }, { en: "sincere", pos: "adj.", zh: "真誠的、誠摯的", lesson: 25 },
+            { en: "swing", pos: "v., n.", zh: "搖擺、鞦韆", lesson: 25 }, { en: "wing", pos: "n.", zh: "翅膀、機翼", lesson: 25 },
+            { en: "over", pos: "prep., adv.", zh: "在…上方、越過", lesson: 25 }, { en: "oven", pos: "n.", zh: "烤箱、烤爐", lesson: 25 },
+            { en: "above", pos: "prep., adv.", zh: "在…上面、高於", lesson: 25 }, { en: "stove", pos: "n.", zh: "爐子、瓦斯爐", lesson: 25 },
+            { en: "future", pos: "n., adj.", zh: "未來、將來", lesson: 26 }, { en: "culture", pos: "n.", zh: "文化、教養", lesson: 26 },
+            { en: "lip", pos: "n.", zh: "嘴唇", lesson: 26 }, { en: "lid", pos: "n.", zh: "蓋子、眼瞼", lesson: 26 },
+            { en: "next", pos: "adj., adv.", zh: "下一個的、隔壁", lesson: 26 }, { en: "nest", pos: "n.", zh: "鳥巢、窩", lesson: 26 },
+            { en: "race", pos: "n., v.", zh: "比賽、賽跑", lesson: 26 }, { en: "trace", pos: "n., v.", zh: "痕跡、蹤跡", lesson: 26 },
+            { en: "root", pos: "n.", zh: "根、根源", lesson: 26 }, { en: "roof", pos: "n.", zh: "屋頂、車頂", lesson: 26 },
+            { en: "cook", pos: "v., n.", zh: "煮飯、廚師", lesson: 27 }, { en: "cookie", pos: "n.", zh: "餅乾", lesson: 27 },
+            { en: "duck", pos: "n.", zh: "鴨子", lesson: 27 }, { en: "truck", pos: "n.", zh: "卡車、貨車", lesson: 27 },
+            { en: "love", pos: "v., n.", zh: "愛、喜愛", lesson: 27 }, { en: "lovely", pos: "adj.", zh: "可愛的、美好的", lesson: 27 },
+            { en: "true", pos: "adj.", zh: "真實的、正確的", lesson: 27 }, { en: "truth", pos: "n.", zh: "真相、事實", lesson: 27 },
+            { en: "pocket", pos: "n.", zh: "口袋", lesson: 27 }, { en: "bucket", pos: "n.", zh: "水桶、桶子", lesson: 27 },
+            { en: "brother", pos: "n.", zh: "兄弟", lesson: 27 }, { en: "bother", pos: "v., n.", zh: "打擾、煩擾", lesson: 27 },
+            { en: "hip", pos: "n.", zh: "臀部、髖部", lesson: 27 }, { en: "hippo", pos: "n.", zh: "河馬", lesson: 27 },
+            { en: "silent", pos: "adj.", zh: "安靜的、沉默的", lesson: 27 }, { en: "silence", pos: "n.", zh: "寂靜、沉默", lesson: 27 },
+            { en: "rub", pos: "v.", zh: "摩擦、搓揉", lesson: 27 }, { en: "rubber", pos: "n.", zh: "橡膠、橡皮擦", lesson: 27 },
+            { en: "gather", pos: "v.", zh: "聚集、收集", lesson: 27 }, { en: "rather", pos: "adv.", zh: "相當、寧可", lesson: 27 },
+            { en: "weather", pos: "n.", zh: "天氣、氣象", lesson: 28 }, { en: "whether", pos: "conj.", zh: "是否、無論", lesson: 28 },
+            { en: "energy", pos: "n.", zh: "能量、精力", lesson: 28 }, { en: "energetic", pos: "adj.", zh: "精力充沛的", lesson: 28 },
+            { en: "get", pos: "v.", zh: "得到、取得", lesson: 28 }, { en: "forget", pos: "v.", zh: "忘記、遺忘", lesson: 28 },
+            { en: "father", pos: "n.", zh: "父親、爸爸", lesson: 28 }, { en: "mother", pos: "n.", zh: "母親、媽媽", lesson: 28 },
+            { en: "rice", pos: "n.", zh: "米、米飯", lesson: 28 }, { en: "price", pos: "n.", zh: "價格、價錢", lesson: 28 },
+            { en: "choice", pos: "n.", zh: "選擇、抉擇", lesson: 28 }, { en: "voice", pos: "n.", zh: "聲音、嗓音", lesson: 28 },
+            { en: "other", pos: "adj., pron.", zh: "其他的、另外的", lesson: 28 }, { en: "another", pos: "adj., pron.", zh: "另一個的、再一個的", lesson: 28 },
+            { en: "police", pos: "n.", zh: "警察、警方", lesson: 28 }
         ];
 
         let currentQuestion = {};
@@ -3276,6 +3276,23 @@
             }
         }
 
+        function getWordPos(wordObj) {
+            if (!wordObj) return '';
+            if (wordObj.pos) return wordObj.pos;
+            const found = wordList.find(w => w.en === wordObj.en && w.lesson === wordObj.lesson) || wordList.find(w => w.en === wordObj.en);
+            return found && found.pos ? found.pos : '';
+        }
+
+        function formatZhWithPos(wordObj) {
+            const pos = getWordPos(wordObj);
+            return pos ? `(${pos}) ${wordObj.zh}` : wordObj.zh;
+        }
+
+        function formatEnWithPos(wordObj) {
+            const pos = getWordPos(wordObj);
+            return pos ? `${wordObj.en} (${pos})` : wordObj.en;
+        }
+
         function generateMultipleChoice(isEnToZh) {
             const optionsContainer = document.getElementById('quiz-options');
             let options = [currentQuestion];
@@ -3303,7 +3320,8 @@
                 btn.style.textAlign = "left";
                 btn.style.transition = "background-color 0.2s";
                 
-                btn.innerText = isEnToZh ? opt.zh : opt.en;
+                btn.dataset.en = opt.en;
+                btn.innerText = isEnToZh ? formatZhWithPos(opt) : formatEnWithPos(opt);
                 
                 btn.onmouseover = function() { if (!this.disabled) this.style.backgroundColor = "#e0e0e0"; };
                 btn.onmouseout = function() { if (!this.disabled) this.style.backgroundColor = "#f9f9f9"; };
@@ -3384,7 +3402,8 @@
                     btn.style.cursor = "pointer";
                     btn.style.textAlign = "left";
                     
-                    btn.innerText = opt.zh;
+                    btn.dataset.en = opt.en;
+                    btn.innerText = formatZhWithPos(opt);
                     
                     btn.onclick = function() {
                         const allBtns = optionsDiv.querySelectorAll('button');
@@ -3459,7 +3478,7 @@
                 inputField.style.backgroundColor = "#d5f5e3";
                 if (hasMc) {
                     mcBtns.forEach(b => {
-                        if (b.innerText === currentQuestion.zh) {
+                        if (b.dataset.en === currentQuestion.en) {
                             b.style.backgroundColor = "#d5f5e3";
                             b.style.borderColor = "#2ecc71";
                         }
@@ -3480,10 +3499,10 @@
                 // 顯示選擇題的正確/錯誤樣式
                 if (hasMc) {
                     mcBtns.forEach(b => {
-                        if (b.innerText === currentQuestion.zh) {
+                        if (b.dataset.en === currentQuestion.en) {
                             b.style.backgroundColor = "#d5f5e3"; 
                             b.style.borderColor = "#2ecc71";
-                        } else if (selectedChineseOpt && b.innerText === selectedChineseOpt.zh && !mcCorrect) {
+                        } else if (selectedChineseOpt && b.dataset.en === selectedChineseOpt.en && !mcCorrect) {
                             b.style.backgroundColor = "#fadbd8"; 
                             b.style.borderColor = "#e74c3c";
                         }
@@ -3504,7 +3523,7 @@
                     inputField.style.borderColor = "#2ecc71";
                     inputField.style.backgroundColor = "#d5f5e3";
                     
-                    resultDiv.innerText = `❌ 中文選擇錯誤！\n正確答案：${currentQuestion.en} (${currentQuestion.zh})`;
+                    resultDiv.innerText = `❌ 中文選擇錯誤！\n正確答案：${currentQuestion.en} (${formatZhWithPos(currentQuestion)})`;
                     resultDiv.style.color = "#c0392b";
                     
                     // 拼對了就可以進入下一題
@@ -3530,14 +3549,14 @@
                 btnEl.style.borderColor = "#2ecc71";
                 setTimeout(() => { startQuiz(); }, 500);
             } else {
-                resultDiv.innerText = `❌ 答錯了！正確答案是：${correct.en} (${correct.zh})`;
+                resultDiv.innerText = `❌ 答錯了！正確答案是：${correct.en} (${formatZhWithPos(correct)})`;
                 resultDiv.style.color = "#c0392b";
                 btnEl.style.backgroundColor = "#fadbd8"; // 淺紅色
                 btnEl.style.borderColor = "#e74c3c";
                 
                 // 把正確選項標示出來
                 buttons.forEach(b => {
-                    if (b.innerText === correct.en || b.innerText === correct.zh) {
+                    if (b.dataset.en === correct.en) {
                         b.style.backgroundColor = "#d5f5e3";
                         b.style.borderColor = "#2ecc71";
                     }
