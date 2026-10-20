@@ -2536,12 +2536,32 @@
                         }
                     }
 
+                    var activeUtteranceKey = null;
+                    var currentUtterance = null;
+
+                    function stopStorySpeech() {
+                        currentUtterance = null;
+                        activeUtteranceKey = null;
+                        window.speechSynthesis.cancel();
+                        if (typeof CSS !== 'undefined' && CSS.highlights) {
+                            CSS.highlights.delete("tts-highlight");
+                        }
+                        window.getSelection().removeAllRanges();
+                    }
+
                     function playUtterance(text, baseOffset) {
                         if (!('speechSynthesis' in window)) {
                             alert('您的瀏覽器不支援語音發音功能。');
                             return;
                         }
                         
+                        var utteranceKey = baseOffset + ':' + text;
+                        if (activeUtteranceKey === utteranceKey && (window.speechSynthesis.speaking || window.speechSynthesis.pending)) {
+                            stopStorySpeech();
+                            return;
+                        }
+                        stopStorySpeech();
+                        activeUtteranceKey = utteranceKey;
                         window.speechSynthesis.cancel();
                         if (typeof CSS !== 'undefined' && CSS.highlights) {
                             CSS.highlights.delete("tts-highlight");
@@ -2549,6 +2569,7 @@
                         window.getSelection().removeAllRanges();
                         
                         var utterance = new SpeechSynthesisUtterance(text);
+                        currentUtterance = utterance;
                         utterance.lang = 'en-US';
                         utterance.rate = 0.72;
                         if (englishFemaleVoice) {
@@ -2556,10 +2577,12 @@
                         }
                         
                         utterance.onstart = function() {
+                            if (currentUtterance !== utterance) return;
                             highlightWord(baseOffset, text.length);
                         };
                         
                         utterance.onboundary = function(event) {
+                            if (currentUtterance !== utterance) return;
                             if (event.name === 'word') {
                                 let length = event.charLength;
                                 if (!length) {
@@ -2573,12 +2596,25 @@
                         };
                         
                         utterance.onend = function() {
+                            if (currentUtterance !== utterance) return;
+                            currentUtterance = null;
+                            activeUtteranceKey = null;
                             if (typeof CSS !== 'undefined' && CSS.highlights) {
                                 CSS.highlights.delete("tts-highlight");
                             }
                             window.getSelection().removeAllRanges();
                         };
                         
+                        utterance.onerror = function() {
+                            if (currentUtterance !== utterance) return;
+                            currentUtterance = null;
+                            activeUtteranceKey = null;
+                            if (typeof CSS !== 'undefined' && CSS.highlights) {
+                                CSS.highlights.delete("tts-highlight");
+                            }
+                            window.getSelection().removeAllRanges();
+                        };
+
                         window.speechSynthesis.speak(utterance);
                     }
 
@@ -2590,7 +2626,7 @@
 
                     paragraphs.forEach(function(p) {
                         p.style.cursor = 'pointer';
-                        p.title = '點擊句子即可聆聽發音';
+                        p.title = '點擊句子即可聆聽發音（再點一次可停止）';
                         p.addEventListener('click', function(e) {
                             let range;
                             if (document.caretPositionFromPoint) {
