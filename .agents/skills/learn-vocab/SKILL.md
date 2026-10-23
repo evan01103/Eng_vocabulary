@@ -26,7 +26,7 @@ For the confirmed list of words, generate the following content in your thought 
 1.  **Vocabulary Table Data**: For each word, determine its part of speech, traditional Chinese meaning, a simple English example sentence (with a traditional Chinese translation), and its KK phonetic symbol (e.g., `[kəmˋpjutɚ]`).
 2.  **Short Story**: Write a simple English short story of **approximately 150 words**. The story MUST use ALL the vocabulary words provided. Keep the vocabulary level simple.
 3.  **Bonus Annotations**: If the user provides extra words to annotate, append them below the story.
-4.  **Morphology Analysis**: Group the words by common prefixes, roots, or suffixes, and provide a brief morphological explanation (in Traditional Chinese) to help the user memorize them.
+4.  **Morphology Analysis**: Group the words by common prefixes (字首), roots (字根), suffixes (字尾), or phonics/rhyming patterns, and provide a clear morphological explanation (in Traditional Chinese) to help the user memorize them. **IMPORTANT**: Whenever a prefix, root, or suffix is mentioned, you MUST explicitly label its Chinese meaning (e.g., `字首 pro- (向前)`, `字根 min- (小、少)`, `形容詞字尾 -ous (充滿…的)`).
 
 ### 3. File Initialization & Repair
 - The target file is `eng_vocab.html` in the user's current project directory.
@@ -61,14 +61,14 @@ For the confirmed list of words, generate the following content in your thought 
       </p>
   </div>
   ```
-- **Morphology Analysis Block**: Use this EXACT HTML template for the morphology analysis:
+- **Morphology Analysis Block**: Use this EXACT HTML template for the morphology analysis (always explicitly label the Chinese meanings of all prefixes, roots, and suffixes):
   ```html
   <div class="analysis" style="margin-top: 25px; padding: 20px; background-color: #f4fdf8; border-left: 6px solid #2ecc71; border-radius: 4px;">
       <h3 style="margin-top: 0; color: #27ae60;">🔍 字根字首字尾歸納</h3>
-      <p style="color: #444; line-height: 1.6;">這組單字主要可以分為 [X] 類字尾：</p>
-      <h4 style="color: #2c3e50; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-top: 20px;">1. [Type 1]</h4>
+      <p style="color: #444; line-height: 1.6;">這組單字主要可以分為 [X] 類字根字首字尾：</p>
+      <h4 style="color: #2c3e50; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-top: 20px;">1. [字首/字根/字尾名稱 (中文意思)]</h4>
       <ul style="line-height: 1.6; color: #444;">
-          <li><strong>word</strong> (explanation ➔ meaning)</li>
+          <li><strong>word</strong> (字首/字根 [意思] + 字尾 [意思] ➔ 衍生解釋 ➔ 中文意思)</li>
       </ul>
   </div>
   ```
