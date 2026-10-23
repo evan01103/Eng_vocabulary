@@ -2503,6 +2503,8 @@
         
         <div style="margin-bottom: 20px;">
             <button onclick="downloadMistakes()" style="padding: 10px 20px; font-size: 1.1em; background-color: #34495e; color: white; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px;">💾 匯出錯題 (.txt)</button>
+            <button onclick="document.getElementById('import-mistakes-input').click()" style="padding: 10px 20px; font-size: 1.1em; background-color: #2980b9; color: white; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px;">📂 匯入錯題 (.txt)</button>
+            <input type="file" id="import-mistakes-input" accept=".txt" style="display: none;" onchange="importMistakes(this)">
             <button onclick="startMistakeQuizDirectly()" style="padding: 10px 20px; font-size: 1.1em; background-color: #c0392b; color: white; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px;">📝 開始錯題測驗</button>
             <button onclick="deleteSelectedMistakes()" style="padding: 10px 20px; font-size: 1.1em; background-color: #e67e22; color: white; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px;">✂️ 刪除勾選單字</button>
             <button onclick="clearMistakes()" style="padding: 10px 20px; font-size: 1.1em; background-color: #95a5a6; color: white; border: none; border-radius: 5px; cursor: pointer;">🗑️ 清空錯題本</button>
@@ -3033,6 +3035,70 @@
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
+        }
+
+        function importMistakes(inputEl) {
+            const file = inputEl.files && inputEl.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result || '';
+                const lines = content.split(/\r?\n/);
+                let addedCount = 0;
+                let skippedCount = 0;
+
+                lines.forEach(line => {
+                    const trimmed = line.trim();
+                    if (!trimmed || trimmed.includes('英語單字學習簿')) return;
+
+                    // 解析匯出格式：en - zh (第 X 課)
+                    const match = trimmed.match(/^(.+?)\s*-\s*(.+?)\s*\(第\s*(\d+)\s*課\)\s*$/);
+                    if (match) {
+                        const en = match[1].trim();
+                        const zh = match[2].trim();
+                        const lesson = parseInt(match[3], 10);
+                        const found = wordList.find(w => w.en.toLowerCase() === en.toLowerCase() && w.lesson === lesson)
+                            || wordList.find(w => w.en.toLowerCase() === en.toLowerCase());
+                        const wordObj = found ? { ...found } : { en: en, pos: getWordPos({ en: en, lesson: lesson }), zh: zh, lesson: lesson };
+
+                        if (!globalMistakes.some(w => w.en.toLowerCase() === wordObj.en.toLowerCase())) {
+                            globalMistakes.push(wordObj);
+                            addedCount++;
+                        } else {
+                            skippedCount++;
+                        }
+                        return;
+                    }
+
+                    // 支援純單字清單（每行一個或逗號分隔）
+                    trimmed.split(/[,，;；]+/).forEach(token => {
+                        const word = token.trim();
+                        if (!word) return;
+                        const found = wordList.find(w => w.en.toLowerCase() === word.toLowerCase());
+                        if (found) {
+                            if (!globalMistakes.some(w => w.en.toLowerCase() === found.en.toLowerCase())) {
+                                globalMistakes.push({ ...found });
+                                addedCount++;
+                            } else {
+                                skippedCount++;
+                            }
+                        }
+                    });
+                });
+
+                saveGlobalMistakes();
+                inputEl.value = '';
+
+                if (addedCount > 0) {
+                    alert(`✅ 成功匯入 ${addedCount} 個錯題單字！` + (skippedCount > 0 ? `（略過 ${skippedCount} 個已存在的單字）` : ''));
+                } else if (skippedCount > 0) {
+                    alert(`檔案中的 ${skippedCount} 個單字都已經在錯題本裡囉！`);
+                } else {
+                    alert('未在檔案中找到可匯入的單字記錄，請確認檔案格式是否正確。');
+                }
+            };
+            reader.readAsText(file, 'UTF-8');
         }
 
         function startMistakeQuizDirectly() {
