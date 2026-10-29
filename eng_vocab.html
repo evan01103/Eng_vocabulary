@@ -2992,6 +2992,19 @@
     <div id="MistakeTab" class="tabcontent">
         <h2>⚠️ 錯題本</h2>
         <p>這裡記錄了您在測驗中曾經答錯的單字。反覆練習可以加深記憶，已經記熟的單字也可以勾選刪除喔！</p>
+
+        <div style="margin-bottom: 18px; padding: 14px 18px; background-color: #eef7ff; border-left: 5px solid #2980b9; border-radius: 6px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;">
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
+                <strong style="color: #2c3e50;">☁️ 跨裝置自動同步代號：</strong>
+                <input type="text" id="cloud-sync-code-input" placeholder="例如：evan01103" style="padding: 6px 10px; font-size: 1em; border: 1px solid #bdc3c7; border-radius: 4px; width: 150px; font-weight: bold; color: #2c3e50;" onchange="changeCloudSyncCode(this.value)">
+                <button onclick="changeCloudSyncCode(document.getElementById('cloud-sync-code-input').value, true)" style="padding: 6px 12px; font-size: 0.95em; background-color: #2980b9; color: white; border: none; border-radius: 4px; cursor: pointer;">💾 設定代號</button>
+                <button onclick="syncMistakesWithCloud(true)" style="padding: 6px 12px; font-size: 0.95em; background-color: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer;">🔄 立即同步</button>
+                <button onclick="forcePushMistakesToCloud()" title="將目前這台裝置的錯題強制覆蓋到雲端" style="padding: 6px 12px; font-size: 0.95em; background-color: #8e44ad; color: white; border: none; border-radius: 4px; cursor: pointer;">📤 以本機覆蓋雲端</button>
+            </div>
+            <div id="cloud-sync-status" style="font-size: 0.95em; color: #27ae60; font-weight: bold;">
+                🟢 雲端同步準備中...
+            </div>
+        </div>
         
         <div style="margin-bottom: 20px;">
             <button onclick="downloadMistakes()" style="padding: 10px 20px; font-size: 1.1em; background-color: #34495e; color: white; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px;">💾 匯出錯題 (.txt)</button>
@@ -3074,6 +3087,10 @@
             // 顯示目前點擊的分頁內容，並將按鈕設為 active
             document.getElementById(tabName).style.display = "block";
             evt.currentTarget.className += " active";
+
+            if ((tabName === 'MistakeTab' || tabName === 'QuizTab') && typeof syncMistakesWithCloud === 'function') {
+                syncMistakesWithCloud(false);
+            }
         }
 
         // 尋找並設定英文女聲
@@ -3472,39 +3489,381 @@
             });
         });
 
-        // 錯題本邏輯
+        // 錯題本邏輯（含跨裝置雲端自動同步）
         let globalMistakes = [];
-        
+        let mistakeMeta = { u: 0, c: 0, d: [] }; // u: 最後更新時間, c: 最後清空時間, d: 最近刪除單字紀錄
+        const CLOUD_KV_APP_KEY = 'n9rpezt3';
+        const DEFAULT_SYNC_CODE = 'evan01103';
+        const CLIENT_INSTANCE_ID = 'client_' + Math.random().toString(36).substring(2, 10);
+        let cloudSseSource = null;
+        let isCloudSyncing = false;
+
+        function getCloudSyncCode() {
+            let savedCode = localStorage.getItem('eng_vocab_sync_code');
+            if (!savedCode || !savedCode.trim()) {
+                savedCode = DEFAULT_SYNC_CODE;
+                localStorage.setItem('eng_vocab_sync_code', savedCode);
+            }
+            return savedCode.trim();
+        }
+
+        function sanitizeSyncKey(code) {
+            return (code || DEFAULT_SYNC_CODE).trim().toLowerCase().replace(/[^a-z0-9_-]/g, '_') || DEFAULT_SYNC_CODE;
+        }
+
+        function updateCloudStatusUI(text, color) {
+            const el = document.getElementById('cloud-sync-status');
+            if (el) {
+                el.innerText = text;
+                if (color) el.style.color = color;
+            }
+        }
+
+        function formatSyncTime(ts) {
+            const d = ts ? new Date(ts) : new Date();
+            const hh = String(d.getHours()).padStart(2, '0');
+            const mm = String(d.getMinutes()).padStart(2, '0');
+            const ss = String(d.getSeconds()).padStart(2, '0');
+            return `${hh}:${mm}:${ss}`;
+        }
+
+        function toBase64Url(str) {
+            return btoa(unescape(encodeURIComponent(str)))
+                .replace(/\+/g, '-')
+                .replace(/\//g, '_')
+                .replace(/=+$/, '');
+        }
+
+        function fromBase64Url(b64url) {
+            let b64 = b64url.replace(/-/g, '+').replace(/_/g, '/');
+            while (b64.length % 4) b64 += '=';
+            return decodeURIComponent(escape(atob(b64)));
+        }
+
+        function resolveWordObj(enWord, fallbackMap) {
+            const lower = (enWord || '').trim().toLowerCase();
+            const found = wordList.find(w => w.en.toLowerCase() === lower);
+            if (found) return { ...found };
+            if (fallbackMap && fallbackMap[lower]) return { ...fallbackMap[lower] };
+            const localFound = globalMistakes.find(w => w.en.toLowerCase() === lower);
+            if (localFound) return { ...localFound };
+            return { en: enWord.trim(), pos: '', zh: '（自訂或舊課次單字）', lesson: 1 };
+        }
+
+        function saveLocalMistakeState() {
+            localStorage.setItem('eng_vocab_mistakes', JSON.stringify(globalMistakes));
+            localStorage.setItem('eng_vocab_mistakes_meta', JSON.stringify(mistakeMeta));
+            renderMistakesTable();
+        }
+
         function loadGlobalMistakes() {
             let saved = localStorage.getItem('eng_vocab_mistakes');
             if (saved) {
                 try {
-                    globalMistakes = JSON.parse(saved);
+                    globalMistakes = JSON.parse(saved) || [];
                 } catch (e) {
                     globalMistakes = [];
                 }
             }
+            let savedMeta = localStorage.getItem('eng_vocab_mistakes_meta');
+            if (savedMeta) {
+                try {
+                    const parsed = JSON.parse(savedMeta);
+                    mistakeMeta = {
+                        u: parsed.u || 0,
+                        c: parsed.c || 0,
+                        d: Array.isArray(parsed.d) ? parsed.d : []
+                    };
+                } catch (e) {
+                    mistakeMeta = { u: 0, c: 0, d: [] };
+                }
+            }
+            const codeInput = document.getElementById('cloud-sync-code-input');
+            if (codeInput) {
+                codeInput.value = getCloudSyncCode();
+            }
             renderMistakesTable();
+            setupCloudRealtimeStream();
+            syncMistakesWithCloud(false);
         }
 
         function saveGlobalMistakes() {
-            localStorage.setItem('eng_vocab_mistakes', JSON.stringify(globalMistakes));
-            renderMistakesTable();
+            mistakeMeta.u = Date.now();
+            saveLocalMistakeState();
+            pushMistakesToCloud();
         }
 
+        function changeCloudSyncCode(newCode, showTip) {
+            const cleaned = (newCode || '').trim() || DEFAULT_SYNC_CODE;
+            localStorage.setItem('eng_vocab_sync_code', cleaned);
+            const codeInput = document.getElementById('cloud-sync-code-input');
+            if (codeInput) codeInput.value = cleaned;
+            setupCloudRealtimeStream();
+            syncMistakesWithCloud(true);
+            if (showTip) {
+                updateCloudStatusUI(`🔄 已切換同步代號為「${cleaned}」，正在同步...`, '#e67e22');
+            }
+        }
+
+        async function pushMistakesToCloud() {
+            const syncKey = sanitizeSyncKey(getCloudSyncCode());
+            const kvKey = ('ev_m_' + syncKey).substring(0, 60);
+            const ntfyTopic = 'eng_vocab_sync_' + syncKey;
+
+            const wList = globalMistakes.map(w => w.en);
+            const dList = (mistakeMeta.d || []).slice(-35);
+            const compactStr = `${mistakeMeta.u}|${mistakeMeta.c || 0}|${wList.join(',')}|${dList.join(',')}`;
+            const encodedCompact = toBase64Url(compactStr).substring(0, 1000);
+
+            const fullPayload = {
+                type: 'eng_vocab_sync_v1',
+                clientId: CLIENT_INSTANCE_ID,
+                u: mistakeMeta.u,
+                c: mistakeMeta.c || 0,
+                w: wList,
+                d: dList,
+                items: globalMistakes
+            };
+
+            updateCloudStatusUI('🔄 正在自動同步至雲端...', '#e67e22');
+
+            const kvPromise = fetch(`https://keyvalue.immanuel.co/api/KeyVal/UpdateValue/${CLOUD_KV_APP_KEY}/${kvKey}/${encodedCompact}`, {
+                method: 'POST'
+            }).catch(() => null);
+
+            const ntfyPromise = fetch(`https://ntfy.sh/${ntfyTopic}`, {
+                method: 'POST',
+                body: JSON.stringify(fullPayload)
+            }).catch(() => null);
+
+            const [kvRes, ntfyRes] = await Promise.all([kvPromise, ntfyPromise]);
+            if ((kvRes && kvRes.ok) || (ntfyRes && ntfyRes.ok)) {
+                updateCloudStatusUI(`🟢 雲端已自動同步 (${formatSyncTime()} · 共 ${globalMistakes.length} 題)`, '#27ae60');
+            } else {
+                updateCloudStatusUI(`⚪ 已儲存於本機（待網路連線後自動同步）`, '#7f8c8d');
+            }
+        }
+
+        async function forcePushMistakesToCloud() {
+            mistakeMeta.u = Date.now();
+            mistakeMeta.c = globalMistakes.length === 0 ? mistakeMeta.u : mistakeMeta.c;
+            saveLocalMistakeState();
+            await pushMistakesToCloud();
+        }
+
+        function parseCompactKvPayload(rawStr) {
+            if (!rawStr) return null;
+            let cleaned = String(rawStr).trim().replace(/^"+|"+$/g, '');
+            if (!cleaned || cleaned === 'null' || cleaned === 'EMPTY') return null;
+            try {
+                const decoded = fromBase64Url(cleaned);
+                const parts = decoded.split('|');
+                if (parts.length < 3) return null;
+                const u = parseInt(parts[0], 10) || 0;
+                const c = parseInt(parts[1], 10) || 0;
+                const w = parts[2] ? parts[2].split(',').map(s => s.trim()).filter(Boolean) : [];
+                const d = parts[3] ? parts[3].split(',').map(s => s.trim()).filter(Boolean) : [];
+                return { u, c, w, d, items: [] };
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function applyCloudPayloadMerge(cloudData) {
+            if (!cloudData || typeof cloudData.u !== 'number') return false;
+
+            const fallbackMap = {};
+            if (Array.isArray(cloudData.items)) {
+                cloudData.items.forEach(item => {
+                    if (item && item.en) fallbackMap[item.en.toLowerCase()] = item;
+                });
+            }
+
+            let localWords = globalMistakes.map(w => w.en);
+            let localDeleted = Array.isArray(mistakeMeta.d) ? [...mistakeMeta.d] : [];
+            let cloudWords = Array.isArray(cloudData.w) ? cloudData.w : [];
+            let cloudDeleted = Array.isArray(cloudData.d) ? cloudData.d : [];
+
+            const beforeSignature = JSON.stringify(localWords.map(w => w.toLowerCase()).sort());
+
+            // 若雲端曾執行「清空錯題本」且時間比本機最後更新還新，則先清空本機舊題
+            if ((cloudData.c || 0) > (mistakeMeta.u || 0)) {
+                localWords = [];
+                localDeleted = [];
+                mistakeMeta.c = cloudData.c;
+            }
+
+            // 若本機曾執行「清空錯題本」且時間比雲端最後更新還新，則忽略雲端舊題
+            if ((mistakeMeta.c || 0) > (cloudData.u || 0)) {
+                cloudWords = [];
+            }
+
+            const cloudIsNewer = (cloudData.u || 0) >= (mistakeMeta.u || 0);
+            const activeDeletedSet = new Set();
+
+            if (cloudIsNewer) {
+                cloudDeleted.forEach(w => activeDeletedSet.add(w.toLowerCase()));
+                localDeleted.forEach(w => {
+                    if (!cloudWords.some(cw => cw.toLowerCase() === w.toLowerCase())) {
+                        activeDeletedSet.add(w.toLowerCase());
+                    }
+                });
+            } else {
+                localDeleted.forEach(w => activeDeletedSet.add(w.toLowerCase()));
+                cloudDeleted.forEach(w => {
+                    if (!localWords.some(lw => lw.toLowerCase() === w.toLowerCase())) {
+                        activeDeletedSet.add(w.toLowerCase());
+                    }
+                });
+            }
+
+            const mergedWordNames = [];
+            const seenLower = new Set();
+
+            [...localWords, ...cloudWords].forEach(enWord => {
+                const lower = (enWord || '').trim().toLowerCase();
+                if (!lower || seenLower.has(lower) || activeDeletedSet.has(lower)) return;
+                seenLower.add(lower);
+                mergedWordNames.push(enWord.trim());
+            });
+
+            globalMistakes = mergedWordNames.map(en => resolveWordObj(en, fallbackMap));
+            mistakeMeta.u = Math.max(mistakeMeta.u || 0, cloudData.u || 0);
+            mistakeMeta.c = Math.max(mistakeMeta.c || 0, cloudData.c || 0);
+            mistakeMeta.d = Array.from(activeDeletedSet).slice(-35);
+            saveLocalMistakeState();
+
+            const afterSignature = JSON.stringify(globalMistakes.map(w => w.en.toLowerCase()).sort());
+            const cloudSignature = JSON.stringify(cloudWords.map(w => w.toLowerCase()).sort());
+
+            // 若合併後與雲端不一致（代表本機有新增題目需要回推到雲端），自動回推
+            return afterSignature !== cloudSignature || beforeSignature !== afterSignature;
+        }
+
+        async function syncMistakesWithCloud(isManual) {
+            if (isCloudSyncing) return;
+            isCloudSyncing = true;
+            if (isManual) {
+                updateCloudStatusUI('🔄 正在與雲端同步...', '#e67e22');
+            }
+
+            const syncKey = sanitizeSyncKey(getCloudSyncCode());
+            const kvKey = ('ev_m_' + syncKey).substring(0, 60);
+            const ntfyTopic = 'eng_vocab_sync_' + syncKey;
+
+            try {
+                const [kvText, ntfyText] = await Promise.all([
+                    fetch(`https://keyvalue.immanuel.co/api/KeyVal/GetValue/${CLOUD_KV_APP_KEY}/${kvKey}`, { cache: 'no-store' })
+                        .then(r => r.ok ? r.text() : null)
+                        .catch(() => null),
+                    fetch(`https://ntfy.sh/${ntfyTopic}/json?poll=1`, { cache: 'no-store' })
+                        .then(r => r.ok ? r.text() : null)
+                        .catch(() => null)
+                ]);
+
+                const kvPayload = parseCompactKvPayload(kvText);
+                let ntfyPayload = null;
+                if (ntfyText) {
+                    const lines = ntfyText.trim().split(/\r?\n/).filter(Boolean);
+                    for (let i = lines.length - 1; i >= 0; i--) {
+                        try {
+                            const evt = JSON.parse(lines[i]);
+                            if (evt && evt.message) {
+                                const msgObj = JSON.parse(evt.message);
+                                if (msgObj && msgObj.type === 'eng_vocab_sync_v1') {
+                                    ntfyPayload = msgObj;
+                                    break;
+                                }
+                            }
+                        } catch (e) {}
+                    }
+                }
+
+                // 選取時間較新的雲端紀錄，或依序合併
+                const payloads = [kvPayload, ntfyPayload].filter(Boolean).sort((a, b) => (a.u || 0) - (b.u || 0));
+                if (payloads.length > 0) {
+                    const latestCloud = payloads[payloads.length - 1];
+                    const localBeforeCount = globalMistakes.length;
+                    applyCloudPayloadMerge(latestCloud);
+                    const cloudWordsLower = (latestCloud.w || []).map(w => w.toLowerCase()).sort().join(',');
+                    const mergedWordsLower = globalMistakes.map(w => w.en.toLowerCase()).sort().join(',');
+
+                    if (mergedWordsLower !== cloudWordsLower) {
+                        mistakeMeta.u = Date.now();
+                        saveLocalMistakeState();
+                        await pushMistakesToCloud();
+                    } else {
+                        updateCloudStatusUI(`🟢 雲端已自動同步 (${formatSyncTime()} · 共 ${globalMistakes.length} 題)`, '#27ae60');
+                    }
+                } else if (globalMistakes.length > 0 || (mistakeMeta.u || 0) > 0) {
+                    // 雲端尚無資料，將本機資料自動上傳初始化
+                    if (!mistakeMeta.u) mistakeMeta.u = Date.now();
+                    saveLocalMistakeState();
+                    await pushMistakesToCloud();
+                } else {
+                    updateCloudStatusUI(`🟢 雲端已連線 (${formatSyncTime()} · 共 0 題)`, '#27ae60');
+                }
+            } catch (err) {
+                updateCloudStatusUI('⚪ 離線模式（使用本機錯題記錄）', '#7f8c8d');
+            } finally {
+                isCloudSyncing = false;
+            }
+        }
+
+        function setupCloudRealtimeStream() {
+            if (typeof EventSource === 'undefined') return;
+            if (cloudSseSource) {
+                try { cloudSseSource.close(); } catch (e) {}
+                cloudSseSource = null;
+            }
+            const syncKey = sanitizeSyncKey(getCloudSyncCode());
+            const ntfyTopic = 'eng_vocab_sync_' + syncKey;
+            try {
+                cloudSseSource = new EventSource(`https://ntfy.sh/${ntfyTopic}/sse`);
+                cloudSseSource.onmessage = function(e) {
+                    try {
+                        const evt = JSON.parse(e.data);
+                        if (evt && evt.message) {
+                            const msgObj = JSON.parse(evt.message);
+                            if (msgObj && msgObj.type === 'eng_vocab_sync_v1' && msgObj.clientId !== CLIENT_INSTANCE_ID) {
+                                applyCloudPayloadMerge(msgObj);
+                                updateCloudStatusUI(`🟢 已即時接收平板/其他裝置同步 (${formatSyncTime()} · 共 ${globalMistakes.length} 題)`, '#27ae60');
+                            }
+                        }
+                    } catch (err) {}
+                };
+            } catch (e) {}
+        }
+
+        // 當平板或電腦切回視窗、喚醒螢幕時自動同步一次
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible') {
+                syncMistakesWithCloud(false);
+            }
+        });
+        window.addEventListener('focus', function() {
+            syncMistakesWithCloud(false);
+        });
+
         function addMistake(wordObj) {
-            if (!globalMistakes.some(w => w.en === wordObj.en)) {
+            const lower = wordObj.en.toLowerCase();
+            if (Array.isArray(mistakeMeta.d)) {
+                mistakeMeta.d = mistakeMeta.d.filter(d => d.toLowerCase() !== lower);
+            }
+            if (!globalMistakes.some(w => w.en.toLowerCase() === lower)) {
                 globalMistakes.push(wordObj);
                 saveGlobalMistakes();
             }
-            if (!wrongWords.some(w => w.en === wordObj.en)) {
+            if (!wrongWords.some(w => w.en.toLowerCase() === lower)) {
                 wrongWords.push(wordObj);
             }
         }
         
         function clearMistakes() {
-            if (confirm("確定要清空所有錯題記錄嗎？")) {
+            if (confirm("確定要清空所有錯題記錄嗎？（也會同步清空雲端錯題）")) {
                 globalMistakes = [];
+                mistakeMeta.c = Date.now();
+                mistakeMeta.d = [];
                 saveGlobalMistakes();
             }
         }
@@ -3554,6 +3913,9 @@
                             || wordList.find(w => w.en.toLowerCase() === en.toLowerCase());
                         const wordObj = found ? { ...found } : { en: en, pos: getWordPos({ en: en, lesson: lesson }), zh: zh, lesson: lesson };
 
+                        if (Array.isArray(mistakeMeta.d)) {
+                            mistakeMeta.d = mistakeMeta.d.filter(d => d.toLowerCase() !== wordObj.en.toLowerCase());
+                        }
                         if (!globalMistakes.some(w => w.en.toLowerCase() === wordObj.en.toLowerCase())) {
                             globalMistakes.push(wordObj);
                             addedCount++;
@@ -3569,6 +3931,9 @@
                         if (!word) return;
                         const found = wordList.find(w => w.en.toLowerCase() === word.toLowerCase());
                         if (found) {
+                            if (Array.isArray(mistakeMeta.d)) {
+                                mistakeMeta.d = mistakeMeta.d.filter(d => d.toLowerCase() !== found.en.toLowerCase());
+                            }
                             if (!globalMistakes.some(w => w.en.toLowerCase() === found.en.toLowerCase())) {
                                 globalMistakes.push({ ...found });
                                 addedCount++;
@@ -3583,7 +3948,7 @@
                 inputEl.value = '';
 
                 if (addedCount > 0) {
-                    alert(`✅ 成功匯入 ${addedCount} 個錯題單字！` + (skippedCount > 0 ? `（略過 ${skippedCount} 個已存在的單字）` : ''));
+                    alert(`✅ 成功匯入 ${addedCount} 個錯題單字並同步至雲端！` + (skippedCount > 0 ? `（略過 ${skippedCount} 個已存在的單字）` : ''));
                 } else if (skippedCount > 0) {
                     alert(`檔案中的 ${skippedCount} 個單字都已經在錯題本裡囉！`);
                 } else {
@@ -3643,6 +4008,10 @@
         }
 
         function removeSingleMistake(enWord) {
+            if (!Array.isArray(mistakeMeta.d)) mistakeMeta.d = [];
+            if (!mistakeMeta.d.some(d => d.toLowerCase() === enWord.toLowerCase())) {
+                mistakeMeta.d.push(enWord);
+            }
             globalMistakes = globalMistakes.filter(w => w.en !== enWord);
             saveGlobalMistakes();
         }
@@ -3655,6 +4024,12 @@
             }
             if (confirm(`確定要刪除勾選的 ${checkedBoxes.length} 個單字嗎？`)) {
                 const wordsToDelete = Array.from(checkedBoxes).map(cb => cb.value);
+                if (!Array.isArray(mistakeMeta.d)) mistakeMeta.d = [];
+                wordsToDelete.forEach(enWord => {
+                    if (!mistakeMeta.d.some(d => d.toLowerCase() === enWord.toLowerCase())) {
+                        mistakeMeta.d.push(enWord);
+                    }
+                });
                 globalMistakes = globalMistakes.filter(w => !wordsToDelete.includes(w.en));
                 saveGlobalMistakes();
             }
