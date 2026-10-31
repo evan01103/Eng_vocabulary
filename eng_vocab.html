@@ -3090,10 +3090,13 @@
             <button onclick="downloadMistakes()" style="padding: 10px 20px; font-size: 1.1em; background-color: #34495e; color: white; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px;">💾 匯出錯題 (.txt)</button>
             <button onclick="document.getElementById('import-mistakes-input').click()" style="padding: 10px 20px; font-size: 1.1em; background-color: #2980b9; color: white; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px;">📂 匯入錯題 (.txt)</button>
             <input type="file" id="import-mistakes-input" accept=".txt" style="display: none;" onchange="importMistakes(this)">
-            <button onclick="startMistakeQuizDirectly()" style="padding: 10px 20px; font-size: 1.1em; background-color: #c0392b; color: white; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px;">📝 開始錯題測驗</button>
+            <button id="quiz-selected-mistakes-btn" onclick="startSelectedMistakeQuiz()" style="padding: 10px 20px; font-size: 1.1em; background-color: #d35400; color: white; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px; font-weight: bold;">🎯 測驗勾選單字 (0)</button>
+            <button onclick="startMistakeQuizDirectly()" style="padding: 10px 20px; font-size: 1.1em; background-color: #c0392b; color: white; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px;">📝 測驗全部錯題</button>
             <button onclick="deleteSelectedMistakes()" style="padding: 10px 20px; font-size: 1.1em; background-color: #e67e22; color: white; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px;">✂️ 刪除勾選單字</button>
             <button onclick="clearMistakes()" style="padding: 10px 20px; font-size: 1.1em; background-color: #95a5a6; color: white; border: none; border-radius: 5px; cursor: pointer;">🗑️ 清空錯題本</button>
         </div>
+
+        <div id="mistake-quick-select-bar" style="display: none; margin-bottom: 12px; padding: 10px 14px; background-color: #fff8f0; border: 1px solid #f5cba7; border-radius: 6px; line-height: 1.9;"></div>
 
         <table id="mistakes-table" style="width: 100%; border-collapse: collapse; margin-top: 15px;">
             <thead>
@@ -4064,7 +4067,42 @@
             startBtn.style.backgroundColor = "#3498db";
             startBtn.style.display = "none";
             
-            document.getElementById('quiz-question').innerText = "⚠️ 錯題測驗開始！";
+            document.getElementById('quiz-question').innerText = `⚠️ 錯題測驗開始！（共 ${quizQueue.length} 題）`;
+            generateQuestion();
+        }
+
+        function startSelectedMistakeQuiz() {
+            const checkedBoxes = document.querySelectorAll('.mistake-checkbox:checked');
+            if (checkedBoxes.length === 0) {
+                alert("請先在下方勾選要測驗的錯題單字喔！（也可以點選課次按鈕快速勾選）");
+                return;
+            }
+            const selectedEnSet = new Set(Array.from(checkedBoxes).map(cb => cb.value.toLowerCase()));
+            const selectedMistakes = globalMistakes.filter(w => selectedEnSet.has(w.en.toLowerCase()));
+            if (selectedMistakes.length === 0) {
+                alert("找不到勾選的錯題單字！");
+                return;
+            }
+            let quizTabBtn = document.querySelector('.tablinks[onclick*="QuizTab"]');
+            if (quizTabBtn) {
+                let evt = { currentTarget: quizTabBtn };
+                openTab(evt, 'QuizTab');
+            } else {
+                document.getElementById('QuizTab').style.display = "block";
+                document.getElementById('MistakeTab').style.display = "none";
+            }
+
+            resetQuizUI();
+            quizQueue = [...selectedMistakes].sort(() => Math.random() - 0.5);
+            isQuizActive = true;
+            wrongWords = [];
+
+            const startBtn = document.getElementById('start-quiz-btn');
+            startBtn.innerText = "下一題";
+            startBtn.style.backgroundColor = "#3498db";
+            startBtn.style.display = "none";
+
+            document.getElementById('quiz-question').innerText = `🎯 勾選錯題測驗開始！（共 ${quizQueue.length} 題）`;
             generateQuestion();
         }
 
@@ -4072,6 +4110,44 @@
             const checkboxes = document.querySelectorAll('.mistake-checkbox');
             checkboxes.forEach(cb => {
                 cb.checked = selectAllCb.checked;
+                if (cb.closest('tr')) {
+                    cb.closest('tr').style.backgroundColor = cb.checked ? '#fff9e6' : '';
+                }
+            });
+            updateSelectAllCheckboxState();
+        }
+
+        function selectMistakesByLesson(lessonNum) {
+            const checkboxes = Array.from(document.querySelectorAll('.mistake-checkbox'));
+            const lessonBoxes = checkboxes.filter(cb => parseInt(cb.dataset.lesson, 10) === lessonNum);
+            if (lessonBoxes.length === 0) return;
+            const allLessonChecked = lessonBoxes.every(cb => cb.checked);
+            lessonBoxes.forEach(cb => {
+                cb.checked = !allLessonChecked;
+                if (cb.closest('tr')) {
+                    cb.closest('tr').style.backgroundColor = cb.checked ? '#fff9e6' : '';
+                }
+            });
+            updateSelectAllCheckboxState();
+        }
+
+        function selectRandomMistakes(count) {
+            const checkboxes = Array.from(document.querySelectorAll('.mistake-checkbox'));
+            checkboxes.forEach(cb => {
+                cb.checked = false;
+                if (cb.closest('tr')) cb.closest('tr').style.backgroundColor = '';
+            });
+            const shuffled = [...checkboxes].sort(() => Math.random() - 0.5).slice(0, count);
+            shuffled.forEach(cb => {
+                cb.checked = true;
+                if (cb.closest('tr')) cb.closest('tr').style.backgroundColor = '#fff9e6';
+            });
+            if (typeof updateSelectAllCheckboxState === 'function') {
+                updateSelectAllCheckboxState();
+            }
+        }
+        if (false) {
+            [].forEach(() => {
             });
         }
 
@@ -4080,10 +4156,17 @@
             const selectAllCb = document.getElementById('select-all-mistakes');
             if (!selectAllCb) return;
             if (checkboxes.length === 0) {
+                const quizSelBtn = document.getElementById('quiz-selected-mistakes-btn');
+                if (quizSelBtn) quizSelBtn.innerText = '🎯 測驗勾選單字 (0)';
                 selectAllCb.checked = false;
                 return;
             }
-            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+            const quizSelBtn = document.getElementById('quiz-selected-mistakes-btn');
+            if (quizSelBtn) {
+                quizSelBtn.innerText = `🎯 測驗勾選單字 (${checkedCount})`;
+            }
+            const allChecked = checkedCount === checkboxes.length;
             selectAllCb.checked = allChecked;
         }
 
@@ -4124,11 +4207,34 @@
             if (!tbody) return;
             tbody.innerHTML = '';
             if (selectAllCb) selectAllCb.checked = false;
+            const quickBar = document.getElementById('mistake-quick-select-bar');
+            const quizSelBtn = document.getElementById('quiz-selected-mistakes-btn');
+            if (quizSelBtn) quizSelBtn.innerText = '🎯 測驗勾選單字 (0)';
             
             if (globalMistakes.length === 0) {
+                if (quickBar) {
+                    quickBar.style.display = 'none';
+                    quickBar.innerHTML = '';
+                }
                 table.style.display = 'none';
                 msg.style.display = 'block';
             } else {
+                if (quickBar) {
+                    quickBar.style.display = 'block';
+                    const lessonCounts = {};
+                    globalMistakes.forEach(w => {
+                        const l = w.lesson || 1;
+                        lessonCounts[l] = (lessonCounts[l] || 0) + 1;
+                    });
+                    let barHtml = `<strong style="color: #d35400; margin-right: 8px;">⚡ 快速勾選要考的單字：</strong>`;
+                    barHtml += `<button onclick="const cb=document.getElementById('select-all-mistakes'); if(cb){cb.checked=true; toggleSelectAllMistakes(cb);}" style="padding: 4px 10px; font-size: 0.9em; background-color: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 6px;">☑️ 全選 (${globalMistakes.length})</button>`;
+                    barHtml += `<button onclick="const cb=document.getElementById('select-all-mistakes'); if(cb){cb.checked=false; toggleSelectAllMistakes(cb);}" style="padding: 4px 10px; font-size: 0.9em; background-color: #95a5a6; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 6px;">⬜ 取消全選</button>`;
+                    barHtml += `<button onclick="selectRandomMistakes(10)" style="padding: 4px 10px; font-size: 0.9em; background-color: #8e44ad; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px;">🎲 隨機勾選 10 題</button>`;
+                    Object.keys(lessonCounts).sort((a, b) => Number(a) - Number(b)).forEach(l => {
+                        barHtml += `<button onclick="selectMistakesByLesson(${l})" title="點擊勾選/取消勾選第 ${l} 課的錯題" style="padding: 3px 9px; font-size: 0.88em; background-color: #ecf0f1; color: #2c3e50; border: 1px solid #bdc3c7; border-radius: 12px; cursor: pointer; margin-right: 5px; margin-top: 4px;">第 ${l} 課 (${lessonCounts[l]})</button>`;
+                    });
+                    quickBar.innerHTML = barHtml;
+                }
                 table.style.display = 'table';
                 msg.style.display = 'none';
                 
@@ -4143,7 +4249,19 @@
                     cb.className = 'mistake-checkbox';
                     cb.value = w.en;
                     cb.style.cssText = 'width: 18px; height: 18px; cursor: pointer;';
-                    cb.onchange = updateSelectAllCheckboxState;
+                    cb.dataset.lesson = w.lesson || 1;
+                    cb.onchange = function() {
+                        tr.style.backgroundColor = cb.checked ? '#fff9e6' : '';
+                        updateSelectAllCheckboxState();
+                    };
+                    tr.style.cursor = 'pointer';
+                    tr.title = '點擊此列可勾選/取消勾選此單字';
+                    tr.onclick = function(e) {
+                        if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+                        cb.checked = !cb.checked;
+                        tr.style.backgroundColor = cb.checked ? '#fff9e6' : '';
+                        updateSelectAllCheckboxState();
+                    };
                     tdCheck.appendChild(cb);
 
                     // 單字與發音欄位
