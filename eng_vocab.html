@@ -3079,7 +3079,8 @@
                 <input type="text" id="cloud-sync-code-input" placeholder="例如：evan01103" style="padding: 6px 10px; font-size: 1em; border: 1px solid #bdc3c7; border-radius: 4px; width: 150px; font-weight: bold; color: #2c3e50;" onchange="changeCloudSyncCode(this.value)">
                 <button onclick="changeCloudSyncCode(document.getElementById('cloud-sync-code-input').value, true)" style="padding: 6px 12px; font-size: 0.95em; background-color: #2980b9; color: white; border: none; border-radius: 4px; cursor: pointer;">💾 設定代號</button>
                 <button onclick="syncMistakesWithCloud(true)" style="padding: 6px 12px; font-size: 0.95em; background-color: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer;">🔄 立即同步</button>
-                <button onclick="forcePushMistakesToCloud()" title="將目前這台裝置的錯題強制覆蓋到雲端" style="padding: 6px 12px; font-size: 0.95em; background-color: #8e44ad; color: white; border: none; border-radius: 4px; cursor: pointer;">📤 以本機覆蓋雲端</button>
+                <button onclick="forcePushMistakesToCloud()" title="將這台裝置目前的錯題上傳覆蓋到雲端" style="padding: 6px 12px; font-size: 0.95em; background-color: #8e44ad; color: white; border: none; border-radius: 4px; cursor: pointer;">📤 上傳本機到雲端</button>
+                <button onclick="forcePullMistakesFromCloud()" title="直接從雲端下載錯題到這台裝置" style="padding: 6px 12px; font-size: 0.95em; background-color: #d35400; color: white; border: none; border-radius: 4px; cursor: pointer;">📥 從雲端下載到本機</button>
             </div>
             <div id="cloud-sync-status" style="font-size: 0.95em; color: #27ae60; font-weight: bold;">
                 🟢 雲端同步準備中...
@@ -3688,6 +3689,82 @@
             }
         }
 
+        const KV_CHUNK_SIZE = 150;
+
+        async function writeChunkedKv(kvKey, encodedStr) {
+            if (!encodedStr) return null;
+            try {
+                if (encodedStr.length <= KV_CHUNK_SIZE) {
+                    const res = await fetch(`https://keyvalue.immanuel.co/api/KeyVal/UpdateValue/${CLOUD_KV_APP_KEY}/${kvKey}/${encodedStr}`, {
+                        method: 'POST'
+                    });
+                    return res && res.ok ? { ok: true } : null;
+                }
+                const chunks = [];
+                for (let i = 0; i < encodedStr.length; i += KV_CHUNK_SIZE) {
+                    chunks.push(encodedStr.substring(i, i + KV_CHUNK_SIZE));
+                }
+                const subPromises = [];
+                for (let i = 1; i < chunks.length; i++) {
+                    subPromises.push(
+                        fetch(`https://keyvalue.immanuel.co/api/KeyVal/UpdateValue/${CLOUD_KV_APP_KEY}/${kvKey}_${i}/${chunks[i]}`, {
+                            method: 'POST'
+                        }).catch(() => null)
+                    );
+                }
+                const subResults = await Promise.all(subPromises);
+                if (subResults.some(r => !r || !r.ok)) return null;
+                const headVal = `CHUNKED_${chunks.length}_${chunks[0]}`;
+                const headRes = await fetch(`https://keyvalue.immanuel.co/api/KeyVal/UpdateValue/${CLOUD_KV_APP_KEY}/${kvKey}/${headVal}`, {
+                    method: 'POST'
+                }).catch(() => null);
+                return headRes && headRes.ok ? { ok: true } : null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        async function readChunkedKv(kvKey) {
+            try {
+                const headText = await fetch(`https://keyvalue.immanuel.co/api/KeyVal/GetValue/${CLOUD_KV_APP_KEY}/${kvKey}`, { cache: 'no-store' })
+                    .then(r => r.ok ? r.text() : null)
+                    .catch(() => null);
+                if (!headText) return { ok: false, text: () => null };
+                const cleanedHead = String(headText).trim().replace(/^"+|"+$/g, '');
+                if (!cleanedHead || cleanedHead === 'null' || cleanedHead === 'EMPTY') {
+                    return { ok: false, text: () => null };
+                }
+                const match = cleanedHead.match(/^CHUNKED_(\d+)_(.*)$/);
+                if (!match) {
+                    return { ok: true, text: () => cleanedHead };
+                }
+                const totalChunks = parseInt(match[1], 10);
+                const chunk0 = match[2];
+                if (!totalChunks || totalChunks <= 1) {
+                    return { ok: true, text: () => chunk0 };
+                }
+                const subPromises = [];
+                for (let i = 1; i < totalChunks; i++) {
+                    subPromises.push(
+                        fetch(`https://keyvalue.immanuel.co/api/KeyVal/GetValue/${CLOUD_KV_APP_KEY}/${kvKey}_${i}`, { cache: 'no-store' })
+                            .then(r => r.ok ? r.text() : null)
+                            .catch(() => null)
+                    );
+                }
+                const subTexts = await Promise.all(subPromises);
+                let fullEncoded = chunk0;
+                for (let i = 0; i < subTexts.length; i++) {
+                    if (!subTexts[i]) return { ok: false, text: () => null };
+                    const part = String(subTexts[i]).trim().replace(/^"+|"+$/g, '');
+                    if (!part || part === 'null') return { ok: false, text: () => null };
+                    fullEncoded += part;
+                }
+                return { ok: true, text: () => fullEncoded };
+            } catch (e) {
+                return { ok: false, text: () => null };
+            }
+        }
+
         async function pushMistakesToCloud() {
             const syncKey = sanitizeSyncKey(getCloudSyncCode());
             const kvKey = ('ev_m_' + syncKey).substring(0, 60);
@@ -3696,7 +3773,7 @@
             const wList = globalMistakes.map(w => w.en);
             const dList = (mistakeMeta.d || []).slice(-35);
             const compactStr = `${mistakeMeta.u}|${mistakeMeta.c || 0}|${wList.join(',')}|${dList.join(',')}`;
-            const encodedCompact = toBase64Url(compactStr).substring(0, 1000);
+            const encodedCompact = toBase64Url(compactStr);
 
             const fullPayload = {
                 type: 'eng_vocab_sync_v1',
@@ -3710,7 +3787,8 @@
 
             updateCloudStatusUI('🔄 正在自動同步至雲端...', '#e67e22');
 
-            const kvPromise = fetch(`https://keyvalue.immanuel.co/api/KeyVal/UpdateValue/${CLOUD_KV_APP_KEY}/${kvKey}/${encodedCompact}`, {
+            const kvPromise = writeChunkedKv(kvKey, encodedCompact);
+            if (false) fetch(`https://keyvalue.immanuel.co/api/KeyVal/UpdateValue/${CLOUD_KV_APP_KEY}/${kvKey}/${encodedCompact}`, {
                 method: 'POST'
             }).catch(() => null);
 
@@ -3722,14 +3800,94 @@
             const [kvRes, ntfyRes] = await Promise.all([kvPromise, ntfyPromise]);
             if ((kvRes && kvRes.ok) || (ntfyRes && ntfyRes.ok)) {
                 updateCloudStatusUI(`🟢 雲端已自動同步 (${formatSyncTime()} · 共 ${globalMistakes.length} 題)`, '#27ae60');
+                if (window._showForcePushAlert) {
+                    window._showForcePushAlert = false;
+                    alert(`✅ 已將這台裝置的 ${globalMistakes.length} 題錯題上傳至雲端！\n請在另一台裝置點擊「🔄 立即同步」或「📥 從雲端下載到本機」。`);
+                }
             } else {
                 updateCloudStatusUI(`⚪ 已儲存於本機（待網路連線後自動同步）`, '#7f8c8d');
             }
         }
 
+        async function forcePullMistakesFromCloud() {
+            updateCloudStatusUI('🔄 正在從雲端下載錯題...', '#e67e22');
+            const syncKey = sanitizeSyncKey(getCloudSyncCode());
+            const kvKey = ('ev_m_' + syncKey).substring(0, 60);
+            const ntfyTopic = 'eng_vocab_sync_' + syncKey;
+            try {
+                const [kvText, ntfyText] = await Promise.all([
+                    readChunkedKv(kvKey).then(r => r.ok ? r.text() : null).catch(() => null),
+                    fetch(`https://ntfy.sh/${ntfyTopic}/json?poll=1&since=all`, { cache: 'no-store' })
+                        .then(r => r.ok ? r.text() : null)
+                        .catch(() => null)
+                ]);
+                const kvPayload = parseCompactKvPayload(kvText);
+                let ntfyPayload = null;
+                if (ntfyText) {
+                    const lines = ntfyText.trim().split(/\r?\n/).filter(Boolean);
+                    for (let i = lines.length - 1; i >= 0; i--) {
+                        try {
+                            const evt = JSON.parse(lines[i]);
+                            if (evt && evt.message) {
+                                const msgObj = JSON.parse(evt.message);
+                                if (msgObj && msgObj.type === 'eng_vocab_sync_v1') {
+                                    ntfyPayload = msgObj;
+                                    break;
+                                }
+                            }
+                        } catch (e) {}
+                    }
+                }
+                const payloads = [kvPayload, ntfyPayload].filter(Boolean).sort((a, b) => {
+                    const aLen = Array.isArray(a.w) ? a.w.length : 0;
+                    const bLen = Array.isArray(b.w) ? b.w.length : 0;
+                    if (aLen !== bLen && (!a.c && !b.c)) return aLen - bLen;
+                    return (a.u || 0) - (b.u || 0);
+                });
+                if (payloads.length === 0) {
+                    updateCloudStatusUI('⚪ 雲端目前尚無錯題資料', '#7f8c8d');
+                    alert('雲端目前還沒有錯題記錄喔！請先在有錯題的電腦點擊「📤 上傳本機到雲端」。');
+                    return;
+                }
+                const latestCloud = payloads[payloads.length - 1];
+                const fallbackMap = {};
+                if (Array.isArray(latestCloud.items)) {
+                    latestCloud.items.forEach(item => {
+                        if (item && item.en) fallbackMap[item.en.toLowerCase()] = item;
+                    });
+                }
+                const cloudWords = Array.isArray(latestCloud.w) ? latestCloud.w : [];
+                const seen = new Set();
+                const cleanWords = [];
+                cloudWords.forEach(en => {
+                    const lower = (en || '').trim().toLowerCase();
+                    if (!lower || seen.has(lower)) return;
+                    seen.add(lower);
+                    cleanWords.push(en.trim());
+                });
+                globalMistakes = cleanWords.map(en => resolveWordObj(en, fallbackMap));
+                mistakeMeta.u = latestCloud.u || Date.now();
+                mistakeMeta.c = 0;
+                mistakeMeta.d = [];
+                saveLocalMistakeState();
+                updateCloudStatusUI(`🟢 已從雲端下載完成 (${formatSyncTime()} · 共 ${globalMistakes.length} 題)`, '#27ae60');
+                alert(`✅ 已成功從雲端下載錯題！目前共有 ${globalMistakes.length} 題錯題。`);
+            } catch (e) {
+                updateCloudStatusUI('⚪ 雲端下載失敗，請檢查網路連線', '#c0392b');
+                alert('雲端下載失敗，請確認網路連線正常後再試一次。');
+            }
+        }
+
         async function forcePushMistakesToCloud() {
+            if (globalMistakes.length === 0) {
+                if (!confirm('目前這台裝置沒有任何錯題（0 題），確定要用「空白」覆蓋雲端嗎？\n（若您是要把電腦的錯題抓到平板，請按「📥 從雲端下載到本機」或「🔄 立即同步」喔！）')) {
+                    return;
+                }
+            }
+            mistakeMeta.d = [];
             mistakeMeta.u = Date.now();
-            mistakeMeta.c = globalMistakes.length === 0 ? mistakeMeta.u : mistakeMeta.c;
+            mistakeMeta.c = globalMistakes.length === 0 ? mistakeMeta.u : 0;
+            window._showForcePushAlert = true;
             saveLocalMistakeState();
             await pushMistakesToCloud();
         }
@@ -3777,7 +3935,13 @@
             }
 
             // 若本機曾執行「清空錯題本」且時間比雲端最後更新還新，則忽略雲端舊題
-            if ((mistakeMeta.c || 0) > (cloudData.u || 0)) {
+            // 若本機為 0 題且雲端有題目，優先接收雲端題目（避免空裝置因舊標記忽略雲端題目）
+            if (localWords.length === 0 && cloudWords.length > 0) {
+                localDeleted = [];
+                mistakeMeta.c = 0;
+                mistakeMeta.d = [];
+            }
+            if (localWords.length > 0 && (mistakeMeta.c || 0) > (cloudData.u || 0)) {
                 cloudWords = [];
             }
 
@@ -3836,10 +4000,10 @@
 
             try {
                 const [kvText, ntfyText] = await Promise.all([
-                    fetch(`https://keyvalue.immanuel.co/api/KeyVal/GetValue/${CLOUD_KV_APP_KEY}/${kvKey}`, { cache: 'no-store' })
+                    readChunkedKv(kvKey)
                         .then(r => r.ok ? r.text() : null)
                         .catch(() => null),
-                    fetch(`https://ntfy.sh/${ntfyTopic}/json?poll=1`, { cache: 'no-store' })
+                    fetch(`https://ntfy.sh/${ntfyTopic}/json?poll=1&since=all`, { cache: 'no-store' })
                         .then(r => r.ok ? r.text() : null)
                         .catch(() => null)
                 ]);
@@ -3863,7 +4027,12 @@
                 }
 
                 // 選取時間較新的雲端紀錄，或依序合併
-                const payloads = [kvPayload, ntfyPayload].filter(Boolean).sort((a, b) => (a.u || 0) - (b.u || 0));
+                const payloads = [kvPayload, ntfyPayload].filter(Boolean).sort((a, b) => {
+                    const aLen = Array.isArray(a.w) ? a.w.length : 0;
+                    const bLen = Array.isArray(b.w) ? b.w.length : 0;
+                    if (aLen !== bLen && (!a.c && !b.c)) return aLen - bLen;
+                    return (a.u || 0) - (b.u || 0);
+                });
                 if (payloads.length > 0) {
                     const latestCloud = payloads[payloads.length - 1];
                     const localBeforeCount = globalMistakes.length;
@@ -3877,6 +4046,10 @@
                         await pushMistakesToCloud();
                     } else {
                         updateCloudStatusUI(`🟢 雲端已自動同步 (${formatSyncTime()} · 共 ${globalMistakes.length} 題)`, '#27ae60');
+                if (window._showForcePushAlert) {
+                    window._showForcePushAlert = false;
+                    alert(`✅ 已將這台裝置的 ${globalMistakes.length} 題錯題上傳至雲端！\n請在另一台裝置點擊「🔄 立即同步」或「📥 從雲端下載到本機」。`);
+                }
                     }
                 } else if (globalMistakes.length > 0 || (mistakeMeta.u || 0) > 0) {
                     // 雲端尚無資料，將本機資料自動上傳初始化
