@@ -3075,12 +3075,13 @@
 
         <div style="margin-bottom: 18px; padding: 14px 18px; background-color: #eef7ff; border-left: 5px solid #2980b9; border-radius: 6px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;">
             <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
-                <strong style="color: #2c3e50;">☁️ 跨裝置自動同步代號：</strong>
+                <strong style="color: #2c3e50;">🐙 GitHub 跨裝置同步：</strong>
                 <input type="text" id="cloud-sync-code-input" placeholder="例如：evan01103" style="padding: 6px 10px; font-size: 1em; border: 1px solid #bdc3c7; border-radius: 4px; width: 150px; font-weight: bold; color: #2c3e50;" onchange="changeCloudSyncCode(this.value)">
                 <button onclick="changeCloudSyncCode(document.getElementById('cloud-sync-code-input').value, true)" style="padding: 6px 12px; font-size: 0.95em; background-color: #2980b9; color: white; border: none; border-radius: 4px; cursor: pointer;">💾 設定代號</button>
                 <button onclick="syncMistakesWithCloud(true)" style="padding: 6px 12px; font-size: 0.95em; background-color: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer;">🔄 立即同步</button>
                 <button onclick="forcePushMistakesToCloud()" title="將這台裝置目前的錯題上傳覆蓋到雲端" style="padding: 6px 12px; font-size: 0.95em; background-color: #8e44ad; color: white; border: none; border-radius: 4px; cursor: pointer;">📤 上傳本機到雲端</button>
-                <button onclick="forcePullMistakesFromCloud()" title="直接從雲端下載錯題到這台裝置" style="padding: 6px 12px; font-size: 0.95em; background-color: #d35400; color: white; border: none; border-radius: 4px; cursor: pointer;">📥 從雲端下載到本機</button>
+                <button onclick="forcePullMistakesFromCloud()" title="直接從 GitHub 與雲端下載錯題到這台裝置" style="padding: 6px 12px; font-size: 0.95em; background-color: #d35400; color: white; border: none; border-radius: 4px; cursor: pointer;">📥 從 GitHub 下載到本機</button>
+                <button onclick="configureGitHubToken()" title="設定 GitHub Token 後，網頁新增/刪除錯題會直接自動寫入 GitHub 儲存庫" style="padding: 6px 12px; font-size: 0.95em; background-color: #24292e; color: white; border: none; border-radius: 4px; cursor: pointer;">🔑 GitHub Token (選填)</button>
             </div>
             <div id="cloud-sync-status" style="font-size: 0.95em; color: #27ae60; font-weight: bold;">
                 🟢 雲端同步準備中...
@@ -3667,6 +3668,11 @@
                 codeInput.value = getCloudSyncCode();
             }
             renderMistakesTable();
+            if (globalMistakes.length === 0 && !(mistakeMeta.c > 0)) {
+                const defaultGhWords = ['scenery','freezer','hanger','shopkeeper','saucer','journalist','engineer','error','goat','February','comment','apologize','improve','since','nest','lantern','problem','complain','minor','include','energetic','whether','police','experience','sneakers','stream','ahead','slice','lonely','principal','either','neither','principle','bomb','before','lamb','lamp','steam','tub','praise','raise','tip','trip','speed','lack','snack','couch'];
+                globalMistakes = defaultGhWords.map(en => resolveWordObj(en, null));
+                saveLocalMistakeState();
+            }
             setupCloudRealtimeStream();
             syncMistakesWithCloud(false);
         }
@@ -3682,6 +3688,11 @@
             localStorage.setItem('eng_vocab_sync_code', cleaned);
             const codeInput = document.getElementById('cloud-sync-code-input');
             if (codeInput) codeInput.value = cleaned;
+            if (globalMistakes.length === 0 && !(mistakeMeta.c > 0)) {
+                const defaultGhWords = ['scenery','freezer','hanger','shopkeeper','saucer','journalist','engineer','error','goat','February','comment','apologize','improve','since','nest','lantern','problem','complain','minor','include','energetic','whether','police','experience','sneakers','stream','ahead','slice','lonely','principal','either','neither','principle','bomb','before','lamb','lamp','steam','tub','praise','raise','tip','trip','speed','lack','snack','couch'];
+                globalMistakes = defaultGhWords.map(en => resolveWordObj(en, null));
+                saveLocalMistakeState();
+            }
             setupCloudRealtimeStream();
             syncMistakesWithCloud(true);
             if (showTip) {
@@ -3690,6 +3701,114 @@
         }
 
         const KV_CHUNK_SIZE = 150;
+        const GITHUB_REPO_OWNER = 'evan01103';
+        const GITHUB_REPO_NAME = 'Eng_vocabulary';
+        const GITHUB_SYNC_PATH = 'mistakes_sync.json';
+
+        function getGitHubToken() {
+            return (localStorage.getItem('eng_vocab_gh_token') || '').trim();
+        }
+
+        function configureGitHubToken() {
+            const current = getGitHubToken();
+            const input = prompt(
+                '🐙 設定 GitHub Personal Access Token (PAT)：\n' +
+                '（選填：從 GitHub「下載/讀取」錯題完全免填 Token！\n' +
+                '若想在平板或電腦答題時，由瀏覽器自動把新錯題 Commit 回 GitHub，請貼上具有 repo / contents 權限的 Token；留空則清除）',
+                current
+            );
+            if (input === null) return;
+            const cleaned = input.trim();
+            if (cleaned) {
+                localStorage.setItem('eng_vocab_gh_token', cleaned);
+                alert('✅ 已儲存 GitHub Token（僅保存在本機瀏覽器）！現在這台裝置的錯題異動會直接同步寫入 GitHub 儲存庫。');
+                pushMistakesToCloud();
+            } else {
+                localStorage.removeItem('eng_vocab_gh_token');
+                alert('已清除本機的 GitHub Token（仍可免 Token 自動從 GitHub 讀取同步）。');
+            }
+        }
+
+        async function fetchGitHubMistakesPayload() {
+            const token = getGitHubToken();
+            const headers = { 'Accept': 'application/vnd.github.v3+json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+
+            try {
+                const apiRes = await fetch(`https://api.github.com/repos/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/contents/${GITHUB_SYNC_PATH}?ref=main&_t=${Date.now()}`, {
+                    headers,
+                    cache: 'no-store'
+                });
+                if (apiRes && apiRes.ok) {
+                    const data = await apiRes.json();
+                    if (data && data.sha) window._lastGitHubSyncSha = data.sha;
+                    if (data && data.content) {
+                        const rawJson = decodeURIComponent(escape(atob(data.content.replace(/\s/g, ''))));
+                        const parsed = JSON.parse(rawJson);
+                        if (parsed && Array.isArray(parsed.w)) return parsed;
+                    }
+                }
+            } catch (e) {}
+
+            try {
+                const rawRes = await fetch(`https://raw.githubusercontent.com/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/main/${GITHUB_SYNC_PATH}?_t=${Date.now()}`, { cache: 'no-store' });
+                if (rawRes && rawRes.ok) {
+                    const parsed = await rawRes.json();
+                    if (parsed && Array.isArray(parsed.w)) return parsed;
+                }
+            } catch (e) {}
+
+            try {
+                const localRes = await fetch(`./${GITHUB_SYNC_PATH}?_t=${Date.now()}`, { cache: 'no-store' });
+                if (localRes && localRes.ok) {
+                    const parsed = await localRes.json();
+                    if (parsed && Array.isArray(parsed.w)) return parsed;
+                }
+            } catch (e) {}
+
+            return null;
+        }
+
+        async function pushGitHubMistakesPayload(fullPayload) {
+            const token = getGitHubToken();
+            if (!token) return null;
+            const headers = {
+                'Accept': 'application/vnd.github+json',
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            };
+            try {
+                let sha = window._lastGitHubSyncSha || null;
+                const getRes = await fetch(`https://api.github.com/repos/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/contents/${GITHUB_SYNC_PATH}?ref=main&_t=${Date.now()}`, {
+                    headers,
+                    cache: 'no-store'
+                }).catch(() => null);
+                if (getRes && getRes.ok) {
+                    const getJson = await getRes.json();
+                    if (getJson && getJson.sha) sha = getJson.sha;
+                }
+                const contentB64 = btoa(unescape(encodeURIComponent(JSON.stringify(fullPayload, null, 2))));
+                const bodyObj = {
+                    message: `sync(mistakes): update mistakes_sync.json (${(fullPayload.w || []).length} words)`,
+                    content: contentB64,
+                    branch: 'main'
+                };
+                if (sha) bodyObj.sha = sha;
+                const putRes = await fetch(`https://api.github.com/repos/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/contents/${GITHUB_SYNC_PATH}`, {
+                    method: 'PUT',
+                    headers,
+                    body: JSON.stringify(bodyObj)
+                });
+                if (putRes && putRes.ok) {
+                    const putJson = await putRes.json().catch(() => null);
+                    if (putJson && putJson.content && putJson.content.sha) {
+                        window._lastGitHubSyncSha = putJson.content.sha;
+                    }
+                    return { ok: true };
+                }
+            } catch (e) {}
+            return null;
+        }
 
         async function writeChunkedKv(kvKey, encodedStr) {
             if (!encodedStr) return null;
@@ -3797,8 +3916,9 @@
                 body: JSON.stringify(fullPayload)
             }).catch(() => null);
 
-            const [kvRes, ntfyRes] = await Promise.all([kvPromise, ntfyPromise]);
-            if ((kvRes && kvRes.ok) || (ntfyRes && ntfyRes.ok)) {
+            const [kvRes, ntfyRes, ghRes] = await Promise.all([kvPromise, ntfyPromise, pushGitHubMistakesPayload(fullPayload)]);
+            if ((ghRes && ghRes.ok) || (kvRes && kvRes.ok) || (ntfyRes && ntfyRes.ok)) {
+                const ghNote = (ghRes && ghRes.ok) ? ' · GitHub 已同步' : '';
                 updateCloudStatusUI(`🟢 雲端已自動同步 (${formatSyncTime()} · 共 ${globalMistakes.length} 題)`, '#27ae60');
                 if (window._showForcePushAlert) {
                     window._showForcePushAlert = false;
@@ -3815,7 +3935,8 @@
             const kvKey = ('ev_m_' + syncKey).substring(0, 60);
             const ntfyTopic = 'eng_vocab_sync_' + syncKey;
             try {
-                const [kvText, ntfyText] = await Promise.all([
+                const [ghPayload, kvText, ntfyText] = await Promise.all([
+                    fetchGitHubMistakesPayload().catch(() => null),
                     readChunkedKv(kvKey).then(r => r.ok ? r.text() : null).catch(() => null),
                     fetch(`https://ntfy.sh/${ntfyTopic}/json?poll=1&since=all`, { cache: 'no-store' })
                         .then(r => r.ok ? r.text() : null)
@@ -3838,7 +3959,7 @@
                         } catch (e) {}
                     }
                 }
-                const payloads = [kvPayload, ntfyPayload].filter(Boolean).sort((a, b) => {
+                const payloads = [ghPayload, kvPayload, ntfyPayload].filter(Boolean).sort((a, b) => {
                     const aLen = Array.isArray(a.w) ? a.w.length : 0;
                     const bLen = Array.isArray(b.w) ? b.w.length : 0;
                     if (aLen !== bLen && (!a.c && !b.c)) return aLen - bLen;
@@ -3999,6 +4120,7 @@
             const ntfyTopic = 'eng_vocab_sync_' + syncKey;
 
             try {
+                const ghPayload = await fetchGitHubMistakesPayload().catch(() => null);
                 const [kvText, ntfyText] = await Promise.all([
                     readChunkedKv(kvKey)
                         .then(r => r.ok ? r.text() : null)
@@ -4027,7 +4149,7 @@
                 }
 
                 // 選取時間較新的雲端紀錄，或依序合併
-                const payloads = [kvPayload, ntfyPayload].filter(Boolean).sort((a, b) => {
+                const payloads = [ghPayload, kvPayload, ntfyPayload].filter(Boolean).sort((a, b) => {
                     const aLen = Array.isArray(a.w) ? a.w.length : 0;
                     const bLen = Array.isArray(b.w) ? b.w.length : 0;
                     if (aLen !== bLen && (!a.c && !b.c)) return aLen - bLen;
