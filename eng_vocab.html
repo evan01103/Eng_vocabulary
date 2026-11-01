@@ -3574,13 +3574,19 @@
             });
         });
 
-        // 錯題本邏輯（GitHub 跨裝置同步）
+        // 錯題本邏輯（GitHub 跨裝置同步，支援新增與刪除即時同步）
         let globalMistakes = [];
-        let mistakeMeta = { u: 0, c: 0, d: [] }; // u: 最後更新時間, c: 最後清空時間, d: 最近刪除單字紀錄
+        let mistakeMeta = { v: 0, u: 0, c: 0, d: [], dirty: false };
         let isCloudSyncing = false;
+        let cloudSseSource = null;
+        const CLIENT_INSTANCE_ID = 'client_' + Math.random().toString(36).substring(2, 10);
         const GITHUB_REPO_OWNER = 'evan01103';
         const GITHUB_REPO_NAME = 'Eng_vocabulary';
         const GITHUB_SYNC_PATH = 'mistakes_sync.json';
+        const RELAY_APP_KEY = 'n9rpezt3';
+        const RELAY_KV_KEY = 'ev_gh_v2_evan01103';
+        const RELAY_NTFY_TOPIC = 'eng_vocab_gh_v2_evan01103';
+        const KV_CHUNK_SIZE = 150;
 
         function updateCloudStatusUI(text, color) {
             const el = document.getElementById('cloud-sync-status');
@@ -3596,6 +3602,19 @@
             const mm = String(d.getMinutes()).padStart(2, '0');
             const ss = String(d.getSeconds()).padStart(2, '0');
             return `${hh}:${mm}:${ss}`;
+        }
+
+        function toBase64Url(str) {
+            return btoa(unescape(encodeURIComponent(str)))
+                .replace(/\+/g, '-')
+                .replace(/\//g, '_')
+                .replace(/=+$/, '');
+        }
+
+        function fromBase64Url(b64url) {
+            let b64 = b64url.replace(/-/g, '+').replace(/_/g, '/');
+            while (b64.length % 4) b64 += '=';
+            return decodeURIComponent(escape(atob(b64)));
         }
 
         function resolveWordObj(enWord, fallbackMap) {
@@ -3616,9 +3635,11 @@
 
         function loadGlobalMistakes() {
             let saved = localStorage.getItem('eng_vocab_mistakes');
-            if (saved) {
+            let hasSavedList = false;
+            if (saved !== null) {
                 try {
                     globalMistakes = JSON.parse(saved) || [];
+                    hasSavedList = true;
                 } catch (e) {
                     globalMistakes = [];
                 }
@@ -3628,26 +3649,33 @@
                 try {
                     const parsed = JSON.parse(savedMeta);
                     mistakeMeta = {
+                        v: parsed.v || 0,
                         u: parsed.u || 0,
                         c: parsed.c || 0,
-                        d: Array.isArray(parsed.d) ? parsed.d : []
+                        d: Array.isArray(parsed.d) ? parsed.d : [],
+                        dirty: (!parsed.v && ((Array.isArray(parsed.d) && parsed.d.length > 0) || (parsed.c > 0 && globalMistakes.length === 0))) ? true : Boolean(parsed.dirty)
                     };
                 } catch (e) {
-                    mistakeMeta = { u: 0, c: 0, d: [] };
+                    mistakeMeta = { v: 0, u: 0, c: 0, d: [], dirty: false };
                 }
             }
-            if (globalMistakes.length === 0 && !(mistakeMeta.c > 0)) {
+            if (!hasSavedList && globalMistakes.length === 0 && !(mistakeMeta.c > 0) && (mistakeMeta.v || 0) === 0) {
                 const defaultGhWords = ['scenery','freezer','hanger','shopkeeper','saucer','journalist','engineer','error','goat','February','comment','apologize','improve','since','nest','lantern','problem','complain','minor','include','energetic','whether','police','experience','sneakers','stream','ahead','slice','lonely','principal','either','neither','principle','bomb','before','lamb','lamp','steam','tub','praise','raise','tip','trip','speed','lack','snack','couch'];
                 globalMistakes = defaultGhWords.map(en => resolveWordObj(en, null));
+                mistakeMeta.v = 1;
                 saveLocalMistakeState();
             } else {
                 renderMistakesTable();
             }
+            setupRealtimeSyncStream();
             syncMistakesWithCloud(false);
         }
 
         function saveGlobalMistakes() {
+            mistakeMeta.v = (mistakeMeta.v || 1) + 1;
             mistakeMeta.u = Date.now();
+            mistakeMeta.c = globalMistakes.length === 0 ? mistakeMeta.v : 0;
+            mistakeMeta.dirty = true;
             saveLocalMistakeState();
             pushMistakesToCloud();
         }
@@ -3660,21 +3688,107 @@
             const current = getGitHubToken();
             const input = prompt(
                 '🐙 設定 GitHub Personal Access Token (PAT)：\n' +
-                '（選填：從 GitHub「下載/讀取」錯題完全免填 Token！\n' +
-                '若想在平板或電腦答題時，由瀏覽器自動把新錯題 Commit 回 GitHub，請貼上具有 repo / contents 權限的 Token；留空則清除）',
+                '（選填：不填也可以跨裝置自動同步新增與刪除！\n' +
+                '若想額外直接更新 GitHub 儲存庫內的 mistakes_sync.json 檔案，可貼上 Token；留空則清除）',
                 current
             );
             if (input === null) return false;
             const cleaned = input.trim();
             if (cleaned) {
                 localStorage.setItem('eng_vocab_gh_token', cleaned);
-                alert('✅ 已儲存 GitHub Token（僅保存在本機瀏覽器）！現在這台裝置的錯題異動會直接同步寫入 GitHub 儲存庫。');
+                alert('✅ 已儲存 GitHub Token（僅保存在本機瀏覽器）！');
                 pushMistakesToCloud();
                 return true;
             } else {
                 localStorage.removeItem('eng_vocab_gh_token');
-                alert('已清除本機的 GitHub Token（仍可免 Token 自動從 GitHub 讀取同步）。');
+                alert('已清除本機的 GitHub Token。');
                 return false;
+            }
+        }
+
+        async function writeChunkedKv(kvKey, encodedStr) {
+            if (!encodedStr) return null;
+            try {
+                if (encodedStr.length <= KV_CHUNK_SIZE) {
+                    const res = await fetch(`https://keyvalue.immanuel.co/api/KeyVal/UpdateValue/${RELAY_APP_KEY}/${kvKey}/${encodedStr}`, {
+                        method: 'POST'
+                    });
+                    return res && res.ok ? { ok: true } : null;
+                }
+                const chunks = [];
+                for (let i = 0; i < encodedStr.length; i += KV_CHUNK_SIZE) {
+                    chunks.push(encodedStr.substring(i, i + KV_CHUNK_SIZE));
+                }
+                const subPromises = [];
+                for (let i = 1; i < chunks.length; i++) {
+                    subPromises.push(
+                        fetch(`https://keyvalue.immanuel.co/api/KeyVal/UpdateValue/${RELAY_APP_KEY}/${kvKey}_${i}/${chunks[i]}`, {
+                            method: 'POST'
+                        }).catch(() => null)
+                    );
+                }
+                const subResults = await Promise.all(subPromises);
+                if (subResults.some(r => !r || !r.ok)) return null;
+                const headVal = `CHUNKED_${chunks.length}_${chunks[0]}`;
+                const headRes = await fetch(`https://keyvalue.immanuel.co/api/KeyVal/UpdateValue/${RELAY_APP_KEY}/${kvKey}/${headVal}`, {
+                    method: 'POST'
+                }).catch(() => null);
+                return headRes && headRes.ok ? { ok: true } : null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        async function readChunkedKv(kvKey) {
+            try {
+                const headText = await fetch(`https://keyvalue.immanuel.co/api/KeyVal/GetValue/${RELAY_APP_KEY}/${kvKey}`, { cache: 'no-store' })
+                    .then(r => r.ok ? r.text() : null)
+                    .catch(() => null);
+                if (!headText) return null;
+                const cleanedHead = String(headText).trim().replace(/^"+|"+$/g, '');
+                if (!cleanedHead || cleanedHead === 'null' || cleanedHead === 'EMPTY') return null;
+                const match = cleanedHead.match(/^CHUNKED_(\d+)_(.*)$/);
+                if (!match) return cleanedHead;
+                const totalChunks = parseInt(match[1], 10);
+                const chunk0 = match[2];
+                if (!totalChunks || totalChunks <= 1) return chunk0;
+                const subPromises = [];
+                for (let i = 1; i < totalChunks; i++) {
+                    subPromises.push(
+                        fetch(`https://keyvalue.immanuel.co/api/KeyVal/GetValue/${RELAY_APP_KEY}/${kvKey}_${i}`, { cache: 'no-store' })
+                            .then(r => r.ok ? r.text() : null)
+                            .catch(() => null)
+                    );
+                }
+                const subTexts = await Promise.all(subPromises);
+                let fullEncoded = chunk0;
+                for (let i = 0; i < subTexts.length; i++) {
+                    if (!subTexts[i]) return null;
+                    const part = String(subTexts[i]).trim().replace(/^"+|"+$/g, '');
+                    if (!part || part === 'null') return null;
+                    fullEncoded += part;
+                }
+                return fullEncoded;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function parseCompactKvPayload(rawStr) {
+            if (!rawStr) return null;
+            let cleaned = String(rawStr).trim().replace(/^"+|"+$/g, '');
+            if (!cleaned || cleaned === 'null' || cleaned === 'EMPTY') return null;
+            try {
+                const decoded = fromBase64Url(cleaned);
+                const parts = decoded.split('|');
+                if (parts.length < 4) return null;
+                const v = parseInt(parts[0], 10) || 1;
+                const c = parseInt(parts[1], 10) || 0;
+                const w = parts[2] ? parts[2].split(',').map(s => s.trim()).filter(Boolean) : [];
+                const d = parts[3] ? parts[3].split(',').map(s => s.trim()).filter(Boolean) : [];
+                return { v, u: v, c, w, d, items: [] };
+            } catch (e) {
+                return null;
             }
         }
 
@@ -3694,7 +3808,10 @@
                     if (data && data.content) {
                         const rawJson = decodeURIComponent(escape(atob(data.content.replace(/\s/g, ''))));
                         const parsed = JSON.parse(rawJson);
-                        if (parsed && Array.isArray(parsed.w)) return parsed;
+                        if (parsed && Array.isArray(parsed.w)) {
+                            parsed.v = parsed.v || 1;
+                            return parsed;
+                        }
                     }
                 }
             } catch (e) {}
@@ -3703,7 +3820,10 @@
                 const rawRes = await fetch(`https://raw.githubusercontent.com/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/main/${GITHUB_SYNC_PATH}?_t=${Date.now()}`, { cache: 'no-store' });
                 if (rawRes && rawRes.ok) {
                     const parsed = await rawRes.json();
-                    if (parsed && Array.isArray(parsed.w)) return parsed;
+                    if (parsed && Array.isArray(parsed.w)) {
+                        parsed.v = parsed.v || 1;
+                        return parsed;
+                    }
                 }
             } catch (e) {}
 
@@ -3711,11 +3831,44 @@
                 const localRes = await fetch(`./${GITHUB_SYNC_PATH}?_t=${Date.now()}`, { cache: 'no-store' });
                 if (localRes && localRes.ok) {
                     const parsed = await localRes.json();
-                    if (parsed && Array.isArray(parsed.w)) return parsed;
+                    if (parsed && Array.isArray(parsed.w)) {
+                        parsed.v = parsed.v || 1;
+                        return parsed;
+                    }
                 }
             } catch (e) {}
 
             return null;
+        }
+
+        async function fetchAllCloudPayloads() {
+            const [ghPayload, kvRaw, ntfyText] = await Promise.all([
+                fetchGitHubMistakesPayload().catch(() => null),
+                readChunkedKv(RELAY_KV_KEY).catch(() => null),
+                fetch(`https://ntfy.sh/${RELAY_NTFY_TOPIC}/json?poll=1&since=all`, { cache: 'no-store' })
+                    .then(r => r.ok ? r.text() : null)
+                    .catch(() => null)
+            ]);
+            const kvPayload = parseCompactKvPayload(kvRaw);
+            let ntfyPayload = null;
+            if (ntfyText) {
+                const lines = ntfyText.trim().split(/\r?\n/).filter(Boolean);
+                for (let i = lines.length - 1; i >= 0; i--) {
+                    try {
+                        const evt = JSON.parse(lines[i]);
+                        if (evt && evt.message) {
+                            const msgObj = JSON.parse(evt.message);
+                            if (msgObj && (msgObj.type === 'eng_vocab_sync_v2' || msgObj.type === 'eng_vocab_sync_v1')) {
+                                msgObj.v = msgObj.v || 1;
+                                ntfyPayload = msgObj;
+                                break;
+                            }
+                        }
+                    } catch (e) {}
+                }
+            }
+            const list = [ghPayload, kvPayload, ntfyPayload].filter(Boolean).sort((a, b) => (a.v || 1) - (b.v || 1));
+            return list.length > 0 ? list[list.length - 1] : null;
         }
 
         async function pushGitHubMistakesPayload(fullPayload) {
@@ -3738,7 +3891,7 @@
                 }
                 const contentB64 = btoa(unescape(encodeURIComponent(JSON.stringify(fullPayload, null, 2))));
                 const bodyObj = {
-                    message: `sync(mistakes): update mistakes_sync.json (${(fullPayload.w || []).length} words)`,
+                    message: `sync(mistakes): v${fullPayload.v} (${(fullPayload.w || []).length} words)`,
                     content: contentB64,
                     branch: 'main'
                 };
@@ -3760,183 +3913,136 @@
         }
 
         async function pushMistakesToCloud() {
+            updateCloudStatusUI('🔄 正在同步錯題變更（含新增/刪除）...', '#e67e22');
+
+            const cloudCur = await fetchAllCloudPayloads().catch(() => null);
+            const cloudV = cloudCur ? (cloudCur.v || 1) : 0;
+            if ((mistakeMeta.v || 1) <= cloudV) {
+                mistakeMeta.v = cloudV + 1;
+            }
+            mistakeMeta.c = globalMistakes.length === 0 ? mistakeMeta.v : 0;
+
             const wList = globalMistakes.map(w => w.en);
-            const dList = (mistakeMeta.d || []).slice(-35);
+            const dList = (mistakeMeta.d || []).slice(-250);
+            const compactStr = `${mistakeMeta.v}|${mistakeMeta.c || 0}|${wList.join(',')}|${dList.join(',')}`;
+            const encodedCompact = toBase64Url(compactStr);
+
             const fullPayload = {
-                type: 'eng_vocab_sync_v1',
-                u: mistakeMeta.u,
+                type: 'eng_vocab_sync_v2',
+                clientId: CLIENT_INSTANCE_ID,
+                v: mistakeMeta.v,
+                u: Date.now(),
                 c: mistakeMeta.c || 0,
                 w: wList,
                 d: dList,
                 items: globalMistakes
             };
 
-            if (!getGitHubToken()) {
-                updateCloudStatusUI(`🟢 本機已儲存 (${formatSyncTime()} · 共 ${globalMistakes.length} 題)`, '#27ae60');
-                return;
-            }
+            const kvPromise = writeChunkedKv(RELAY_KV_KEY, encodedCompact);
+            const ntfyPromise = fetch(`https://ntfy.sh/${RELAY_NTFY_TOPIC}`, {
+                method: 'POST',
+                body: JSON.stringify(fullPayload)
+            }).catch(() => null);
+            const ghPromise = pushGitHubMistakesPayload(fullPayload);
 
-            updateCloudStatusUI('🔄 正在同步寫入 GitHub...', '#e67e22');
-            const ghRes = await pushGitHubMistakesPayload(fullPayload);
-            if (ghRes && ghRes.ok) {
-                updateCloudStatusUI(`🟢 GitHub 已自動同步 (${formatSyncTime()} · 共 ${globalMistakes.length} 題)`, '#27ae60');
+            const [kvRes, ntfyRes, ghRes] = await Promise.all([kvPromise, ntfyPromise, ghPromise]);
+            if ((kvRes && kvRes.ok) || (ntfyRes && ntfyRes.ok) || (ghRes && ghRes.ok)) {
+                mistakeMeta.dirty = false;
+                saveLocalMistakeState();
+                updateCloudStatusUI(`🟢 已自動同步 (版本 v${mistakeMeta.v} · ${formatSyncTime()} · 共 ${globalMistakes.length} 題)`, '#27ae60');
                 if (window._showForcePushAlert) {
                     window._showForcePushAlert = false;
-                    alert(`✅ 已將這台裝置的 ${globalMistakes.length} 題錯題上傳至 GitHub！\n請在另一台裝置點擊「🔄 與 GitHub 同步」或「📥 從 GitHub 下載到本機」。`);
+                    alert(`✅ 已將這台裝置目前的 ${globalMistakes.length} 題錯題同步上傳（版本 v${mistakeMeta.v}）！\n另一台裝置會自動同步更新（或點「🔄 與 GitHub 同步」）。`);
                 }
             } else {
-                updateCloudStatusUI('⚪ GitHub 寫入失敗（請檢查 Token 權限或網路連線）', '#c0392b');
+                updateCloudStatusUI('⚪ 已儲存於本機（待網路連線後自動同步）', '#7f8c8d');
             }
         }
 
-        async function forcePullMistakesFromCloud() {
-            updateCloudStatusUI('🔄 正在從 GitHub 下載錯題...', '#e67e22');
-            try {
-                const ghPayload = await fetchGitHubMistakesPayload();
-                if (!ghPayload) {
-                    updateCloudStatusUI('⚪ 無法連線至 GitHub，請檢查網路', '#c0392b');
-                    alert('無法從 GitHub 讀取錯題資料，請確認網路連線正常後再試一次。');
-                    return;
-                }
-                const fallbackMap = {};
-                if (Array.isArray(ghPayload.items)) {
-                    ghPayload.items.forEach(item => {
-                        if (item && item.en) fallbackMap[item.en.toLowerCase()] = item;
-                    });
-                }
-                const cloudWords = Array.isArray(ghPayload.w) ? ghPayload.w : [];
-                const seen = new Set();
-                const cleanWords = [];
-                cloudWords.forEach(en => {
-                    const lower = (en || '').trim().toLowerCase();
-                    if (!lower || seen.has(lower)) return;
-                    seen.add(lower);
-                    cleanWords.push(en.trim());
-                });
-                globalMistakes = cleanWords.map(en => resolveWordObj(en, fallbackMap));
-                mistakeMeta.u = ghPayload.u || Date.now();
-                mistakeMeta.c = 0;
-                mistakeMeta.d = [];
-                saveLocalMistakeState();
-                updateCloudStatusUI(`🟢 已從 GitHub 下載完成 (${formatSyncTime()} · 共 ${globalMistakes.length} 題)`, '#27ae60');
-                alert(`✅ 已成功從 GitHub 下載錯題！目前共有 ${globalMistakes.length} 題錯題。`);
-            } catch (e) {
-                updateCloudStatusUI('⚪ GitHub 下載失敗，請檢查網路連線', '#c0392b');
-                alert('GitHub 下載失敗，請確認網路連線正常後再試一次。');
-            }
-        }
-
-        async function forcePushMistakesToCloud() {
-            if (!getGitHubToken()) {
-                const ok = configureGitHubToken();
-                if (!ok) return;
-            }
-            if (globalMistakes.length === 0) {
-                if (!confirm('目前這台裝置沒有任何錯題（0 題），確定要用「空白」覆蓋 GitHub 上的錯題嗎？\n（若您是要把 GitHub 的錯題抓到這台裝置，請按「📥 從 GitHub 下載到本機」喔！）')) {
-                    return;
-                }
-            }
-            mistakeMeta.d = [];
-            mistakeMeta.u = Date.now();
-            mistakeMeta.c = globalMistakes.length === 0 ? mistakeMeta.u : 0;
-            window._showForcePushAlert = true;
-            saveLocalMistakeState();
-            await pushMistakesToCloud();
-        }
-
-        function applyCloudPayloadMerge(cloudData) {
-            if (!cloudData || typeof cloudData.u !== 'number') return false;
-
+        function applyCloudSnapshot(cloudData) {
+            if (!cloudData) return;
             const fallbackMap = {};
             if (Array.isArray(cloudData.items)) {
                 cloudData.items.forEach(item => {
                     if (item && item.en) fallbackMap[item.en.toLowerCase()] = item;
                 });
             }
-
-            let localWords = globalMistakes.map(w => w.en);
-            let localDeleted = Array.isArray(mistakeMeta.d) ? [...mistakeMeta.d] : [];
-            let cloudWords = Array.isArray(cloudData.w) ? cloudData.w : [];
-            let cloudDeleted = Array.isArray(cloudData.d) ? cloudData.d : [];
-
-            const beforeSignature = JSON.stringify(localWords.map(w => w.toLowerCase()).sort());
-
-            if ((cloudData.c || 0) > (mistakeMeta.u || 0)) {
-                localWords = [];
-                localDeleted = [];
-                mistakeMeta.c = cloudData.c;
-            }
-
-            if (localWords.length === 0 && cloudWords.length > 0) {
-                localDeleted = [];
-                mistakeMeta.c = 0;
-                mistakeMeta.d = [];
-            }
-            if (localWords.length > 0 && (mistakeMeta.c || 0) > (cloudData.u || 0)) {
-                cloudWords = [];
-            }
-
-            const cloudIsNewer = (cloudData.u || 0) >= (mistakeMeta.u || 0);
-            const activeDeletedSet = new Set();
-
-            if (cloudIsNewer) {
-                cloudDeleted.forEach(w => activeDeletedSet.add(w.toLowerCase()));
-                localDeleted.forEach(w => {
-                    if (!cloudWords.some(cw => cw.toLowerCase() === w.toLowerCase())) {
-                        activeDeletedSet.add(w.toLowerCase());
-                    }
-                });
-            } else {
-                localDeleted.forEach(w => activeDeletedSet.add(w.toLowerCase()));
-                cloudDeleted.forEach(w => {
-                    if (!localWords.some(lw => lw.toLowerCase() === w.toLowerCase())) {
-                        activeDeletedSet.add(w.toLowerCase());
-                    }
-                });
-            }
-
-            const mergedWordNames = [];
-            const seenLower = new Set();
-
-            [...localWords, ...cloudWords].forEach(enWord => {
-                const lower = (enWord || '').trim().toLowerCase();
-                if (!lower || seenLower.has(lower) || activeDeletedSet.has(lower)) return;
-                seenLower.add(lower);
-                mergedWordNames.push(enWord.trim());
+            const cloudWords = Array.isArray(cloudData.w) ? cloudData.w : [];
+            const seen = new Set();
+            const cleanWords = [];
+            cloudWords.forEach(en => {
+                const lower = (en || '').trim().toLowerCase();
+                if (!lower || seen.has(lower)) return;
+                seen.add(lower);
+                cleanWords.push(en.trim());
             });
-
-            globalMistakes = mergedWordNames.map(en => resolveWordObj(en, fallbackMap));
-            mistakeMeta.u = Math.max(mistakeMeta.u || 0, cloudData.u || 0);
-            mistakeMeta.c = Math.max(mistakeMeta.c || 0, cloudData.c || 0);
-            mistakeMeta.d = Array.from(activeDeletedSet).slice(-35);
+            globalMistakes = cleanWords.map(en => resolveWordObj(en, fallbackMap));
+            mistakeMeta.v = cloudData.v || 1;
+            mistakeMeta.u = cloudData.u || Date.now();
+            mistakeMeta.c = globalMistakes.length === 0 ? (cloudData.c || mistakeMeta.v) : 0;
+            mistakeMeta.d = Array.isArray(cloudData.d) ? cloudData.d.slice(-250) : [];
+            mistakeMeta.dirty = false;
             saveLocalMistakeState();
+        }
 
-            const afterSignature = JSON.stringify(globalMistakes.map(w => w.en.toLowerCase()).sort());
-            const cloudSignature = JSON.stringify(cloudWords.map(w => w.toLowerCase()).sort());
+        async function forcePullMistakesFromCloud() {
+            updateCloudStatusUI('🔄 正在下載最新錯題清單...', '#e67e22');
+            try {
+                const latestCloud = await fetchAllCloudPayloads();
+                if (!latestCloud) {
+                    updateCloudStatusUI('⚪ 無法連線，請檢查網路', '#c0392b');
+                    alert('無法讀取雲端錯題資料，請確認網路連線正常後再試一次。');
+                    return;
+                }
+                applyCloudSnapshot(latestCloud);
+                updateCloudStatusUI(`🟢 已下載同步完成 (版本 v${mistakeMeta.v} · ${formatSyncTime()} · 共 ${globalMistakes.length} 題)`, '#27ae60');
+                alert(`✅ 已成功同步最新錯題！目前共有 ${globalMistakes.length} 題錯題。`);
+            } catch (e) {
+                updateCloudStatusUI('⚪ 下載失敗，請檢查網路連線', '#c0392b');
+                alert('下載失敗，請確認網路連線正常後再試一次。');
+            }
+        }
 
-            return afterSignature !== cloudSignature || beforeSignature !== afterSignature;
+        async function forcePushMistakesToCloud() {
+            if (globalMistakes.length === 0) {
+                if (!confirm('目前這台裝置沒有任何錯題（0 題），確定要用「空白（0 題）」同步覆蓋另一台裝置嗎？')) {
+                    return;
+                }
+            }
+            mistakeMeta.v = (mistakeMeta.v || 1) + 1;
+            mistakeMeta.u = Date.now();
+            mistakeMeta.c = globalMistakes.length === 0 ? mistakeMeta.v : 0;
+            mistakeMeta.dirty = true;
+            window._showForcePushAlert = true;
+            saveLocalMistakeState();
+            await pushMistakesToCloud();
         }
 
         async function syncMistakesWithCloud(isManual) {
             if (isCloudSyncing) return;
             isCloudSyncing = true;
             if (isManual) {
-                updateCloudStatusUI('🔄 正在與 GitHub 同步...', '#e67e22');
+                updateCloudStatusUI('🔄 正在同步最新錯題...', '#e67e22');
             }
 
             try {
-                const ghPayload = await fetchGitHubMistakesPayload();
-                if (ghPayload) {
-                    applyCloudPayloadMerge(ghPayload);
-                    const cloudWordsLower = (ghPayload.w || []).map(w => w.toLowerCase()).sort().join(',');
-                    const mergedWordsLower = globalMistakes.map(w => w.en.toLowerCase()).sort().join(',');
+                const latestCloud = await fetchAllCloudPayloads();
+                if (latestCloud) {
+                    const cloudV = latestCloud.v || 1;
+                    const localV = mistakeMeta.v || 0;
 
-                    if (mergedWordsLower !== cloudWordsLower && getGitHubToken()) {
-                        mistakeMeta.u = Date.now();
-                        saveLocalMistakeState();
+                    if (mistakeMeta.dirty) {
                         await pushMistakesToCloud();
+                    } else if (cloudV > localV || localV === 0) {
+                        applyCloudSnapshot(latestCloud);
+                        updateCloudStatusUI(`🟢 已自動同步 (版本 v${mistakeMeta.v} · ${formatSyncTime()} · 共 ${globalMistakes.length} 題)`, '#27ae60');
                     } else {
-                        updateCloudStatusUI(`🟢 GitHub 已同步 (${formatSyncTime()} · 共 ${globalMistakes.length} 題)`, '#27ae60');
+                        const cloudWordsLower = (latestCloud.w || []).map(w => w.toLowerCase()).sort().join(',');
+                        const localWordsLower = globalMistakes.map(w => w.en.toLowerCase()).sort().join(',');
+                        if (cloudWordsLower !== localWordsLower) {
+                            applyCloudSnapshot(latestCloud);
+                        }
+                        updateCloudStatusUI(`🟢 已自動同步 (版本 v${mistakeMeta.v} · ${formatSyncTime()} · 共 ${globalMistakes.length} 題)`, '#27ae60');
                     }
                 } else {
                     updateCloudStatusUI(`🟢 本機錯題記錄 (${formatSyncTime()} · 共 ${globalMistakes.length} 題)`, '#27ae60');
@@ -3947,6 +4053,36 @@
                 isCloudSyncing = false;
             }
         }
+
+        function setupRealtimeSyncStream() {
+            if (typeof EventSource === 'undefined') return;
+            if (cloudSseSource) {
+                try { cloudSseSource.close(); } catch (e) {}
+                cloudSseSource = null;
+            }
+            try {
+                cloudSseSource = new EventSource(`https://ntfy.sh/${RELAY_NTFY_TOPIC}/sse`);
+                cloudSseSource.onmessage = function(e) {
+                    try {
+                        const evt = JSON.parse(e.data);
+                        if (evt && evt.message) {
+                            const msgObj = JSON.parse(evt.message);
+                            if (msgObj && msgObj.type === 'eng_vocab_sync_v2' && msgObj.clientId !== CLIENT_INSTANCE_ID) {
+                                applyCloudSnapshot(msgObj);
+                                updateCloudStatusUI(`🟢 已即時同步更新 (版本 v${mistakeMeta.v} · ${formatSyncTime()} · 共 ${globalMistakes.length} 題)`, '#27ae60');
+                            }
+                        }
+                    } catch (err) {}
+                };
+            } catch (e) {}
+        }
+
+        setInterval(function() {
+            if (document.visibilityState === 'visible') {
+                syncMistakesWithCloud(false);
+            }
+        }, 20000);
+
         // 當平板或電腦切回視窗、喚醒螢幕時自動同步一次
         document.addEventListener('visibilitychange', function() {
             if (document.visibilityState === 'visible') {
@@ -3972,15 +4108,13 @@
         }
         
         function clearMistakes() {
-            if (confirm("確定要清空所有錯題記錄嗎？（也會同步清空雲端錯題）")) {
+            if (confirm("確定要清空所有錯題記錄嗎？（另一台裝置也會同步清空）")) {
                 globalMistakes = [];
-                mistakeMeta.c = Date.now();
                 mistakeMeta.d = [];
                 saveGlobalMistakes();
             }
         }
-        
-        function downloadMistakes() {
+                function downloadMistakes() {
             if (globalMistakes.length === 0) {
                 alert("目前沒有錯題記錄喔！");
                 return;
