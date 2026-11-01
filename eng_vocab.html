@@ -3076,15 +3076,15 @@
         <div style="margin-bottom: 18px; padding: 14px 18px; background-color: #eef7ff; border-left: 5px solid #2980b9; border-radius: 6px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;">
             <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
                 <strong style="color: #2c3e50;">🐙 GitHub 跨裝置同步：</strong>
-                <input type="text" id="cloud-sync-code-input" placeholder="例如：evan01103" style="padding: 6px 10px; font-size: 1em; border: 1px solid #bdc3c7; border-radius: 4px; width: 150px; font-weight: bold; color: #2c3e50;" onchange="changeCloudSyncCode(this.value)">
-                <button onclick="changeCloudSyncCode(document.getElementById('cloud-sync-code-input').value, true)" style="padding: 6px 12px; font-size: 0.95em; background-color: #2980b9; color: white; border: none; border-radius: 4px; cursor: pointer;">💾 設定代號</button>
-                <button onclick="syncMistakesWithCloud(true)" style="padding: 6px 12px; font-size: 0.95em; background-color: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer;">🔄 立即同步</button>
-                <button onclick="forcePushMistakesToCloud()" title="將這台裝置目前的錯題上傳覆蓋到雲端" style="padding: 6px 12px; font-size: 0.95em; background-color: #8e44ad; color: white; border: none; border-radius: 4px; cursor: pointer;">📤 上傳本機到雲端</button>
+
+
+                <button onclick="syncMistakesWithCloud(true)" style="padding: 6px 12px; font-size: 0.95em; background-color: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer;">🔄 與 GitHub 同步</button>
+                <button onclick="forcePushMistakesToCloud()" title="將這台裝置目前的錯題上傳到 GitHub" style="padding: 6px 12px; font-size: 0.95em; background-color: #8e44ad; color: white; border: none; border-radius: 4px; cursor: pointer;">📤 上傳本機到 GitHub</button>
                 <button onclick="forcePullMistakesFromCloud()" title="直接從 GitHub 與雲端下載錯題到這台裝置" style="padding: 6px 12px; font-size: 0.95em; background-color: #d35400; color: white; border: none; border-radius: 4px; cursor: pointer;">📥 從 GitHub 下載到本機</button>
                 <button onclick="configureGitHubToken()" title="設定 GitHub Token 後，網頁新增/刪除錯題會直接自動寫入 GitHub 儲存庫" style="padding: 6px 12px; font-size: 0.95em; background-color: #24292e; color: white; border: none; border-radius: 4px; cursor: pointer;">🔑 GitHub Token (選填)</button>
             </div>
             <div id="cloud-sync-status" style="font-size: 0.95em; color: #27ae60; font-weight: bold;">
-                🟢 雲端同步準備中...
+                🟢 GitHub 同步準備中...
             </div>
         </div>
         
@@ -3574,27 +3574,13 @@
             });
         });
 
-        // 錯題本邏輯（含跨裝置雲端自動同步）
+        // 錯題本邏輯（GitHub 跨裝置同步）
         let globalMistakes = [];
         let mistakeMeta = { u: 0, c: 0, d: [] }; // u: 最後更新時間, c: 最後清空時間, d: 最近刪除單字紀錄
-        const CLOUD_KV_APP_KEY = 'n9rpezt3';
-        const DEFAULT_SYNC_CODE = 'evan01103';
-        const CLIENT_INSTANCE_ID = 'client_' + Math.random().toString(36).substring(2, 10);
-        let cloudSseSource = null;
         let isCloudSyncing = false;
-
-        function getCloudSyncCode() {
-            let savedCode = localStorage.getItem('eng_vocab_sync_code');
-            if (!savedCode || !savedCode.trim()) {
-                savedCode = DEFAULT_SYNC_CODE;
-                localStorage.setItem('eng_vocab_sync_code', savedCode);
-            }
-            return savedCode.trim();
-        }
-
-        function sanitizeSyncKey(code) {
-            return (code || DEFAULT_SYNC_CODE).trim().toLowerCase().replace(/[^a-z0-9_-]/g, '_') || DEFAULT_SYNC_CODE;
-        }
+        const GITHUB_REPO_OWNER = 'evan01103';
+        const GITHUB_REPO_NAME = 'Eng_vocabulary';
+        const GITHUB_SYNC_PATH = 'mistakes_sync.json';
 
         function updateCloudStatusUI(text, color) {
             const el = document.getElementById('cloud-sync-status');
@@ -3610,19 +3596,6 @@
             const mm = String(d.getMinutes()).padStart(2, '0');
             const ss = String(d.getSeconds()).padStart(2, '0');
             return `${hh}:${mm}:${ss}`;
-        }
-
-        function toBase64Url(str) {
-            return btoa(unescape(encodeURIComponent(str)))
-                .replace(/\+/g, '-')
-                .replace(/\//g, '_')
-                .replace(/=+$/, '');
-        }
-
-        function fromBase64Url(b64url) {
-            let b64 = b64url.replace(/-/g, '+').replace(/_/g, '/');
-            while (b64.length % 4) b64 += '=';
-            return decodeURIComponent(escape(atob(b64)));
         }
 
         function resolveWordObj(enWord, fallbackMap) {
@@ -3663,17 +3636,13 @@
                     mistakeMeta = { u: 0, c: 0, d: [] };
                 }
             }
-            const codeInput = document.getElementById('cloud-sync-code-input');
-            if (codeInput) {
-                codeInput.value = getCloudSyncCode();
-            }
-            renderMistakesTable();
             if (globalMistakes.length === 0 && !(mistakeMeta.c > 0)) {
                 const defaultGhWords = ['scenery','freezer','hanger','shopkeeper','saucer','journalist','engineer','error','goat','February','comment','apologize','improve','since','nest','lantern','problem','complain','minor','include','energetic','whether','police','experience','sneakers','stream','ahead','slice','lonely','principal','either','neither','principle','bomb','before','lamb','lamp','steam','tub','praise','raise','tip','trip','speed','lack','snack','couch'];
                 globalMistakes = defaultGhWords.map(en => resolveWordObj(en, null));
                 saveLocalMistakeState();
+            } else {
+                renderMistakesTable();
             }
-            setupCloudRealtimeStream();
             syncMistakesWithCloud(false);
         }
 
@@ -3682,28 +3651,6 @@
             saveLocalMistakeState();
             pushMistakesToCloud();
         }
-
-        function changeCloudSyncCode(newCode, showTip) {
-            const cleaned = (newCode || '').trim() || DEFAULT_SYNC_CODE;
-            localStorage.setItem('eng_vocab_sync_code', cleaned);
-            const codeInput = document.getElementById('cloud-sync-code-input');
-            if (codeInput) codeInput.value = cleaned;
-            if (globalMistakes.length === 0 && !(mistakeMeta.c > 0)) {
-                const defaultGhWords = ['scenery','freezer','hanger','shopkeeper','saucer','journalist','engineer','error','goat','February','comment','apologize','improve','since','nest','lantern','problem','complain','minor','include','energetic','whether','police','experience','sneakers','stream','ahead','slice','lonely','principal','either','neither','principle','bomb','before','lamb','lamp','steam','tub','praise','raise','tip','trip','speed','lack','snack','couch'];
-                globalMistakes = defaultGhWords.map(en => resolveWordObj(en, null));
-                saveLocalMistakeState();
-            }
-            setupCloudRealtimeStream();
-            syncMistakesWithCloud(true);
-            if (showTip) {
-                updateCloudStatusUI(`🔄 已切換同步代號為「${cleaned}」，正在同步...`, '#e67e22');
-            }
-        }
-
-        const KV_CHUNK_SIZE = 150;
-        const GITHUB_REPO_OWNER = 'evan01103';
-        const GITHUB_REPO_NAME = 'Eng_vocabulary';
-        const GITHUB_SYNC_PATH = 'mistakes_sync.json';
 
         function getGitHubToken() {
             return (localStorage.getItem('eng_vocab_gh_token') || '').trim();
@@ -3717,15 +3664,17 @@
                 '若想在平板或電腦答題時，由瀏覽器自動把新錯題 Commit 回 GitHub，請貼上具有 repo / contents 權限的 Token；留空則清除）',
                 current
             );
-            if (input === null) return;
+            if (input === null) return false;
             const cleaned = input.trim();
             if (cleaned) {
                 localStorage.setItem('eng_vocab_gh_token', cleaned);
                 alert('✅ 已儲存 GitHub Token（僅保存在本機瀏覽器）！現在這台裝置的錯題異動會直接同步寫入 GitHub 儲存庫。');
                 pushMistakesToCloud();
+                return true;
             } else {
                 localStorage.removeItem('eng_vocab_gh_token');
                 alert('已清除本機的 GitHub Token（仍可免 Token 自動從 GitHub 讀取同步）。');
+                return false;
             }
         }
 
@@ -3810,93 +3759,11 @@
             return null;
         }
 
-        async function writeChunkedKv(kvKey, encodedStr) {
-            if (!encodedStr) return null;
-            try {
-                if (encodedStr.length <= KV_CHUNK_SIZE) {
-                    const res = await fetch(`https://keyvalue.immanuel.co/api/KeyVal/UpdateValue/${CLOUD_KV_APP_KEY}/${kvKey}/${encodedStr}`, {
-                        method: 'POST'
-                    });
-                    return res && res.ok ? { ok: true } : null;
-                }
-                const chunks = [];
-                for (let i = 0; i < encodedStr.length; i += KV_CHUNK_SIZE) {
-                    chunks.push(encodedStr.substring(i, i + KV_CHUNK_SIZE));
-                }
-                const subPromises = [];
-                for (let i = 1; i < chunks.length; i++) {
-                    subPromises.push(
-                        fetch(`https://keyvalue.immanuel.co/api/KeyVal/UpdateValue/${CLOUD_KV_APP_KEY}/${kvKey}_${i}/${chunks[i]}`, {
-                            method: 'POST'
-                        }).catch(() => null)
-                    );
-                }
-                const subResults = await Promise.all(subPromises);
-                if (subResults.some(r => !r || !r.ok)) return null;
-                const headVal = `CHUNKED_${chunks.length}_${chunks[0]}`;
-                const headRes = await fetch(`https://keyvalue.immanuel.co/api/KeyVal/UpdateValue/${CLOUD_KV_APP_KEY}/${kvKey}/${headVal}`, {
-                    method: 'POST'
-                }).catch(() => null);
-                return headRes && headRes.ok ? { ok: true } : null;
-            } catch (e) {
-                return null;
-            }
-        }
-
-        async function readChunkedKv(kvKey) {
-            try {
-                const headText = await fetch(`https://keyvalue.immanuel.co/api/KeyVal/GetValue/${CLOUD_KV_APP_KEY}/${kvKey}`, { cache: 'no-store' })
-                    .then(r => r.ok ? r.text() : null)
-                    .catch(() => null);
-                if (!headText) return { ok: false, text: () => null };
-                const cleanedHead = String(headText).trim().replace(/^"+|"+$/g, '');
-                if (!cleanedHead || cleanedHead === 'null' || cleanedHead === 'EMPTY') {
-                    return { ok: false, text: () => null };
-                }
-                const match = cleanedHead.match(/^CHUNKED_(\d+)_(.*)$/);
-                if (!match) {
-                    return { ok: true, text: () => cleanedHead };
-                }
-                const totalChunks = parseInt(match[1], 10);
-                const chunk0 = match[2];
-                if (!totalChunks || totalChunks <= 1) {
-                    return { ok: true, text: () => chunk0 };
-                }
-                const subPromises = [];
-                for (let i = 1; i < totalChunks; i++) {
-                    subPromises.push(
-                        fetch(`https://keyvalue.immanuel.co/api/KeyVal/GetValue/${CLOUD_KV_APP_KEY}/${kvKey}_${i}`, { cache: 'no-store' })
-                            .then(r => r.ok ? r.text() : null)
-                            .catch(() => null)
-                    );
-                }
-                const subTexts = await Promise.all(subPromises);
-                let fullEncoded = chunk0;
-                for (let i = 0; i < subTexts.length; i++) {
-                    if (!subTexts[i]) return { ok: false, text: () => null };
-                    const part = String(subTexts[i]).trim().replace(/^"+|"+$/g, '');
-                    if (!part || part === 'null') return { ok: false, text: () => null };
-                    fullEncoded += part;
-                }
-                return { ok: true, text: () => fullEncoded };
-            } catch (e) {
-                return { ok: false, text: () => null };
-            }
-        }
-
         async function pushMistakesToCloud() {
-            const syncKey = sanitizeSyncKey(getCloudSyncCode());
-            const kvKey = ('ev_m_' + syncKey).substring(0, 60);
-            const ntfyTopic = 'eng_vocab_sync_' + syncKey;
-
             const wList = globalMistakes.map(w => w.en);
             const dList = (mistakeMeta.d || []).slice(-35);
-            const compactStr = `${mistakeMeta.u}|${mistakeMeta.c || 0}|${wList.join(',')}|${dList.join(',')}`;
-            const encodedCompact = toBase64Url(compactStr);
-
             const fullPayload = {
                 type: 'eng_vocab_sync_v1',
-                clientId: CLIENT_INSTANCE_ID,
                 u: mistakeMeta.u,
                 c: mistakeMeta.c || 0,
                 w: wList,
@@ -3904,80 +3771,40 @@
                 items: globalMistakes
             };
 
-            updateCloudStatusUI('🔄 正在自動同步至雲端...', '#e67e22');
+            if (!getGitHubToken()) {
+                updateCloudStatusUI(`🟢 本機已儲存 (${formatSyncTime()} · 共 ${globalMistakes.length} 題)`, '#27ae60');
+                return;
+            }
 
-            const kvPromise = writeChunkedKv(kvKey, encodedCompact);
-            if (false) fetch(`https://keyvalue.immanuel.co/api/KeyVal/UpdateValue/${CLOUD_KV_APP_KEY}/${kvKey}/${encodedCompact}`, {
-                method: 'POST'
-            }).catch(() => null);
-
-            const ntfyPromise = fetch(`https://ntfy.sh/${ntfyTopic}`, {
-                method: 'POST',
-                body: JSON.stringify(fullPayload)
-            }).catch(() => null);
-
-            const [kvRes, ntfyRes, ghRes] = await Promise.all([kvPromise, ntfyPromise, pushGitHubMistakesPayload(fullPayload)]);
-            if ((ghRes && ghRes.ok) || (kvRes && kvRes.ok) || (ntfyRes && ntfyRes.ok)) {
-                const ghNote = (ghRes && ghRes.ok) ? ' · GitHub 已同步' : '';
-                updateCloudStatusUI(`🟢 雲端已自動同步 (${formatSyncTime()} · 共 ${globalMistakes.length} 題)`, '#27ae60');
+            updateCloudStatusUI('🔄 正在同步寫入 GitHub...', '#e67e22');
+            const ghRes = await pushGitHubMistakesPayload(fullPayload);
+            if (ghRes && ghRes.ok) {
+                updateCloudStatusUI(`🟢 GitHub 已自動同步 (${formatSyncTime()} · 共 ${globalMistakes.length} 題)`, '#27ae60');
                 if (window._showForcePushAlert) {
                     window._showForcePushAlert = false;
-                    alert(`✅ 已將這台裝置的 ${globalMistakes.length} 題錯題上傳至雲端！\n請在另一台裝置點擊「🔄 立即同步」或「📥 從雲端下載到本機」。`);
+                    alert(`✅ 已將這台裝置的 ${globalMistakes.length} 題錯題上傳至 GitHub！\n請在另一台裝置點擊「🔄 與 GitHub 同步」或「📥 從 GitHub 下載到本機」。`);
                 }
             } else {
-                updateCloudStatusUI(`⚪ 已儲存於本機（待網路連線後自動同步）`, '#7f8c8d');
+                updateCloudStatusUI('⚪ GitHub 寫入失敗（請檢查 Token 權限或網路連線）', '#c0392b');
             }
         }
 
         async function forcePullMistakesFromCloud() {
-            updateCloudStatusUI('🔄 正在從雲端下載錯題...', '#e67e22');
-            const syncKey = sanitizeSyncKey(getCloudSyncCode());
-            const kvKey = ('ev_m_' + syncKey).substring(0, 60);
-            const ntfyTopic = 'eng_vocab_sync_' + syncKey;
+            updateCloudStatusUI('🔄 正在從 GitHub 下載錯題...', '#e67e22');
             try {
-                const [ghPayload, kvText, ntfyText] = await Promise.all([
-                    fetchGitHubMistakesPayload().catch(() => null),
-                    readChunkedKv(kvKey).then(r => r.ok ? r.text() : null).catch(() => null),
-                    fetch(`https://ntfy.sh/${ntfyTopic}/json?poll=1&since=all`, { cache: 'no-store' })
-                        .then(r => r.ok ? r.text() : null)
-                        .catch(() => null)
-                ]);
-                const kvPayload = parseCompactKvPayload(kvText);
-                let ntfyPayload = null;
-                if (ntfyText) {
-                    const lines = ntfyText.trim().split(/\r?\n/).filter(Boolean);
-                    for (let i = lines.length - 1; i >= 0; i--) {
-                        try {
-                            const evt = JSON.parse(lines[i]);
-                            if (evt && evt.message) {
-                                const msgObj = JSON.parse(evt.message);
-                                if (msgObj && msgObj.type === 'eng_vocab_sync_v1') {
-                                    ntfyPayload = msgObj;
-                                    break;
-                                }
-                            }
-                        } catch (e) {}
-                    }
-                }
-                const payloads = [ghPayload, kvPayload, ntfyPayload].filter(Boolean).sort((a, b) => {
-                    const aLen = Array.isArray(a.w) ? a.w.length : 0;
-                    const bLen = Array.isArray(b.w) ? b.w.length : 0;
-                    if (aLen !== bLen && (!a.c && !b.c)) return aLen - bLen;
-                    return (a.u || 0) - (b.u || 0);
-                });
-                if (payloads.length === 0) {
-                    updateCloudStatusUI('⚪ 雲端目前尚無錯題資料', '#7f8c8d');
-                    alert('雲端目前還沒有錯題記錄喔！請先在有錯題的電腦點擊「📤 上傳本機到雲端」。');
+                const ghPayload = await fetchGitHubMistakesPayload();
+                if (!ghPayload) {
+                    updateCloudStatusUI('⚪ 無法連線至 GitHub，請檢查網路', '#c0392b');
+                    alert('無法從 GitHub 讀取錯題資料，請確認網路連線正常後再試一次。');
                     return;
                 }
-                const latestCloud = payloads[payloads.length - 1];
                 const fallbackMap = {};
-                if (Array.isArray(latestCloud.items)) {
-                    latestCloud.items.forEach(item => {
+                if (Array.isArray(ghPayload.items)) {
+                    ghPayload.items.forEach(item => {
                         if (item && item.en) fallbackMap[item.en.toLowerCase()] = item;
                     });
                 }
-                const cloudWords = Array.isArray(latestCloud.w) ? latestCloud.w : [];
+                const cloudWords = Array.isArray(ghPayload.w) ? ghPayload.w : [];
                 const seen = new Set();
                 const cleanWords = [];
                 cloudWords.forEach(en => {
@@ -3987,21 +3814,25 @@
                     cleanWords.push(en.trim());
                 });
                 globalMistakes = cleanWords.map(en => resolveWordObj(en, fallbackMap));
-                mistakeMeta.u = latestCloud.u || Date.now();
+                mistakeMeta.u = ghPayload.u || Date.now();
                 mistakeMeta.c = 0;
                 mistakeMeta.d = [];
                 saveLocalMistakeState();
-                updateCloudStatusUI(`🟢 已從雲端下載完成 (${formatSyncTime()} · 共 ${globalMistakes.length} 題)`, '#27ae60');
-                alert(`✅ 已成功從雲端下載錯題！目前共有 ${globalMistakes.length} 題錯題。`);
+                updateCloudStatusUI(`🟢 已從 GitHub 下載完成 (${formatSyncTime()} · 共 ${globalMistakes.length} 題)`, '#27ae60');
+                alert(`✅ 已成功從 GitHub 下載錯題！目前共有 ${globalMistakes.length} 題錯題。`);
             } catch (e) {
-                updateCloudStatusUI('⚪ 雲端下載失敗，請檢查網路連線', '#c0392b');
-                alert('雲端下載失敗，請確認網路連線正常後再試一次。');
+                updateCloudStatusUI('⚪ GitHub 下載失敗，請檢查網路連線', '#c0392b');
+                alert('GitHub 下載失敗，請確認網路連線正常後再試一次。');
             }
         }
 
         async function forcePushMistakesToCloud() {
+            if (!getGitHubToken()) {
+                const ok = configureGitHubToken();
+                if (!ok) return;
+            }
             if (globalMistakes.length === 0) {
-                if (!confirm('目前這台裝置沒有任何錯題（0 題），確定要用「空白」覆蓋雲端嗎？\n（若您是要把電腦的錯題抓到平板，請按「📥 從雲端下載到本機」或「🔄 立即同步」喔！）')) {
+                if (!confirm('目前這台裝置沒有任何錯題（0 題），確定要用「空白」覆蓋 GitHub 上的錯題嗎？\n（若您是要把 GitHub 的錯題抓到這台裝置，請按「📥 從 GitHub 下載到本機」喔！）')) {
                     return;
                 }
             }
@@ -4011,24 +3842,6 @@
             window._showForcePushAlert = true;
             saveLocalMistakeState();
             await pushMistakesToCloud();
-        }
-
-        function parseCompactKvPayload(rawStr) {
-            if (!rawStr) return null;
-            let cleaned = String(rawStr).trim().replace(/^"+|"+$/g, '');
-            if (!cleaned || cleaned === 'null' || cleaned === 'EMPTY') return null;
-            try {
-                const decoded = fromBase64Url(cleaned);
-                const parts = decoded.split('|');
-                if (parts.length < 3) return null;
-                const u = parseInt(parts[0], 10) || 0;
-                const c = parseInt(parts[1], 10) || 0;
-                const w = parts[2] ? parts[2].split(',').map(s => s.trim()).filter(Boolean) : [];
-                const d = parts[3] ? parts[3].split(',').map(s => s.trim()).filter(Boolean) : [];
-                return { u, c, w, d, items: [] };
-            } catch (e) {
-                return null;
-            }
         }
 
         function applyCloudPayloadMerge(cloudData) {
@@ -4048,15 +3861,12 @@
 
             const beforeSignature = JSON.stringify(localWords.map(w => w.toLowerCase()).sort());
 
-            // 若雲端曾執行「清空錯題本」且時間比本機最後更新還新，則先清空本機舊題
             if ((cloudData.c || 0) > (mistakeMeta.u || 0)) {
                 localWords = [];
                 localDeleted = [];
                 mistakeMeta.c = cloudData.c;
             }
 
-            // 若本機曾執行「清空錯題本」且時間比雲端最後更新還新，則忽略雲端舊題
-            // 若本機為 0 題且雲端有題目，優先接收雲端題目（避免空裝置因舊標記忽略雲端題目）
             if (localWords.length === 0 && cloudWords.length > 0) {
                 localDeleted = [];
                 mistakeMeta.c = 0;
@@ -4104,7 +3914,6 @@
             const afterSignature = JSON.stringify(globalMistakes.map(w => w.en.toLowerCase()).sort());
             const cloudSignature = JSON.stringify(cloudWords.map(w => w.toLowerCase()).sort());
 
-            // 若合併後與雲端不一致（代表本機有新增題目需要回推到雲端），自動回推
             return afterSignature !== cloudSignature || beforeSignature !== afterSignature;
         }
 
@@ -4112,74 +3921,25 @@
             if (isCloudSyncing) return;
             isCloudSyncing = true;
             if (isManual) {
-                updateCloudStatusUI('🔄 正在與雲端同步...', '#e67e22');
+                updateCloudStatusUI('🔄 正在與 GitHub 同步...', '#e67e22');
             }
 
-            const syncKey = sanitizeSyncKey(getCloudSyncCode());
-            const kvKey = ('ev_m_' + syncKey).substring(0, 60);
-            const ntfyTopic = 'eng_vocab_sync_' + syncKey;
-
             try {
-                const ghPayload = await fetchGitHubMistakesPayload().catch(() => null);
-                const [kvText, ntfyText] = await Promise.all([
-                    readChunkedKv(kvKey)
-                        .then(r => r.ok ? r.text() : null)
-                        .catch(() => null),
-                    fetch(`https://ntfy.sh/${ntfyTopic}/json?poll=1&since=all`, { cache: 'no-store' })
-                        .then(r => r.ok ? r.text() : null)
-                        .catch(() => null)
-                ]);
-
-                const kvPayload = parseCompactKvPayload(kvText);
-                let ntfyPayload = null;
-                if (ntfyText) {
-                    const lines = ntfyText.trim().split(/\r?\n/).filter(Boolean);
-                    for (let i = lines.length - 1; i >= 0; i--) {
-                        try {
-                            const evt = JSON.parse(lines[i]);
-                            if (evt && evt.message) {
-                                const msgObj = JSON.parse(evt.message);
-                                if (msgObj && msgObj.type === 'eng_vocab_sync_v1') {
-                                    ntfyPayload = msgObj;
-                                    break;
-                                }
-                            }
-                        } catch (e) {}
-                    }
-                }
-
-                // 選取時間較新的雲端紀錄，或依序合併
-                const payloads = [ghPayload, kvPayload, ntfyPayload].filter(Boolean).sort((a, b) => {
-                    const aLen = Array.isArray(a.w) ? a.w.length : 0;
-                    const bLen = Array.isArray(b.w) ? b.w.length : 0;
-                    if (aLen !== bLen && (!a.c && !b.c)) return aLen - bLen;
-                    return (a.u || 0) - (b.u || 0);
-                });
-                if (payloads.length > 0) {
-                    const latestCloud = payloads[payloads.length - 1];
-                    const localBeforeCount = globalMistakes.length;
-                    applyCloudPayloadMerge(latestCloud);
-                    const cloudWordsLower = (latestCloud.w || []).map(w => w.toLowerCase()).sort().join(',');
+                const ghPayload = await fetchGitHubMistakesPayload();
+                if (ghPayload) {
+                    applyCloudPayloadMerge(ghPayload);
+                    const cloudWordsLower = (ghPayload.w || []).map(w => w.toLowerCase()).sort().join(',');
                     const mergedWordsLower = globalMistakes.map(w => w.en.toLowerCase()).sort().join(',');
 
-                    if (mergedWordsLower !== cloudWordsLower) {
+                    if (mergedWordsLower !== cloudWordsLower && getGitHubToken()) {
                         mistakeMeta.u = Date.now();
                         saveLocalMistakeState();
                         await pushMistakesToCloud();
                     } else {
-                        updateCloudStatusUI(`🟢 雲端已自動同步 (${formatSyncTime()} · 共 ${globalMistakes.length} 題)`, '#27ae60');
-                if (window._showForcePushAlert) {
-                    window._showForcePushAlert = false;
-                    alert(`✅ 已將這台裝置的 ${globalMistakes.length} 題錯題上傳至雲端！\n請在另一台裝置點擊「🔄 立即同步」或「📥 從雲端下載到本機」。`);
-                }
+                        updateCloudStatusUI(`🟢 GitHub 已同步 (${formatSyncTime()} · 共 ${globalMistakes.length} 題)`, '#27ae60');
                     }
-                } else if (globalMistakes.length > 0 || (mistakeMeta.u || 0) > 0) {
-                    // 雲端尚無資料，將本機資料自動上傳初始化
-                    if (!mistakeMeta.u) mistakeMeta.u = Date.now();
-                    saveLocalMistakeState();
-                    await pushMistakesToCloud();
                 } else {
-                    updateCloudStatusUI(`🟢 雲端已連線 (${formatSyncTime()} · 共 0 題)`, '#27ae60');
+                    updateCloudStatusUI(`🟢 本機錯題記錄 (${formatSyncTime()} · 共 ${globalMistakes.length} 題)`, '#27ae60');
                 }
             } catch (err) {
                 updateCloudStatusUI('⚪ 離線模式（使用本機錯題記錄）', '#7f8c8d');
@@ -4187,32 +3947,6 @@
                 isCloudSyncing = false;
             }
         }
-
-        function setupCloudRealtimeStream() {
-            if (typeof EventSource === 'undefined') return;
-            if (cloudSseSource) {
-                try { cloudSseSource.close(); } catch (e) {}
-                cloudSseSource = null;
-            }
-            const syncKey = sanitizeSyncKey(getCloudSyncCode());
-            const ntfyTopic = 'eng_vocab_sync_' + syncKey;
-            try {
-                cloudSseSource = new EventSource(`https://ntfy.sh/${ntfyTopic}/sse`);
-                cloudSseSource.onmessage = function(e) {
-                    try {
-                        const evt = JSON.parse(e.data);
-                        if (evt && evt.message) {
-                            const msgObj = JSON.parse(evt.message);
-                            if (msgObj && msgObj.type === 'eng_vocab_sync_v1' && msgObj.clientId !== CLIENT_INSTANCE_ID) {
-                                applyCloudPayloadMerge(msgObj);
-                                updateCloudStatusUI(`🟢 已即時接收平板/其他裝置同步 (${formatSyncTime()} · 共 ${globalMistakes.length} 題)`, '#27ae60');
-                            }
-                        }
-                    } catch (err) {}
-                };
-            } catch (e) {}
-        }
-
         // 當平板或電腦切回視窗、喚醒螢幕時自動同步一次
         document.addEventListener('visibilitychange', function() {
             if (document.visibilityState === 'visible') {
