@@ -4546,6 +4546,10 @@
             startBtn.style.backgroundColor = "#3498db";
             startBtn.style.display = "none";
             
+            customQuizPool = [...globalMistakes];
+            startBtn.style.display = "inline-block";
+            const randomBtn = document.getElementById('start-random10-btn');
+            if (randomBtn) randomBtn.style.display = "none";
             document.getElementById('quiz-question').innerText = `⚠️ 錯題測驗開始！（共 ${quizQueue.length} 題）`;
             generateQuestion();
         }
@@ -4581,6 +4585,10 @@
             startBtn.style.backgroundColor = "#3498db";
             startBtn.style.display = "none";
 
+            customQuizPool = [...selectedMistakes];
+            startBtn.style.display = "inline-block";
+            const randomBtn = document.getElementById('start-random10-btn');
+            if (randomBtn) randomBtn.style.display = "none";
             document.getElementById('quiz-question').innerText = `🎯 勾選錯題測驗開始！（共 ${quizQueue.length} 題）`;
             generateQuestion();
         }
@@ -4708,7 +4716,7 @@
                     let barHtml = `<strong style="color: #d35400; margin-right: 8px;">⚡ 快速勾選要考的單字：</strong>`;
                     barHtml += `<button onclick="const cb=document.getElementById('select-all-mistakes'); if(cb){cb.checked=true; toggleSelectAllMistakes(cb);}" style="padding: 4px 10px; font-size: 0.9em; background-color: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 6px;">☑️ 全選 (${globalMistakes.length})</button>`;
                     barHtml += `<button onclick="const cb=document.getElementById('select-all-mistakes'); if(cb){cb.checked=false; toggleSelectAllMistakes(cb);}" style="padding: 4px 10px; font-size: 0.9em; background-color: #95a5a6; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 6px;">⬜ 取消全選</button>`;
-                    barHtml += `<button onclick="selectRandomMistakes(10)" style="padding: 4px 10px; font-size: 0.9em; background-color: #8e44ad; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px;">🎲 隨機勾選 10 題</button>`;
+
                     Object.keys(lessonCounts).sort((a, b) => Number(a) - Number(b)).forEach(l => {
                         barHtml += `<button onclick="selectMistakesByLesson(${l})" title="點擊勾選/取消勾選第 ${l} 課的錯題" style="padding: 3px 9px; font-size: 0.88em; background-color: #ecf0f1; color: #2c3e50; border: 1px solid #bdc3c7; border-radius: 12px; cursor: pointer; margin-right: 5px; margin-top: 4px;">第 ${l} 課 (${lessonCounts[l]})</button>`;
                     });
@@ -5037,12 +5045,14 @@
         let currentQuestion = {};
         let currentQuizMode = 'mc'; // 'mc' for multiple choice, 'dict' for dictation
         let currentQuizScope = []; // 預設不選
+        let customQuizPool = null;
         
         let quizQueue = [];
         let wrongWords = [];
         let isQuizActive = false;
         
         function toggleQuizScope(scope) {
+            customQuizPool = null;
             if (scope === 'all') {
                 if (currentQuizScope.length === 40) {
                     currentQuizScope = [];
@@ -5091,6 +5101,7 @@
         }
 
         function setQuizMode(mode) {
+            window._switchingQuizMode = true;
             currentQuizMode = mode;
             
             // 更新按鈕樣式
@@ -5123,6 +5134,21 @@
             document.getElementById('start-quiz-btn').innerText = "🚀 開始測驗";
             document.getElementById('start-quiz-btn').style.backgroundColor = "#e67e22";
             let randomBtn = document.getElementById('start-random10-btn');
+            if (window._switchingQuizMode) {
+                window._switchingQuizMode = false;
+                if (customQuizPool && customQuizPool.length > 0 && currentQuizScope.length === 0) {
+                    quizQueue = [...customQuizPool].sort(() => Math.random() - 0.5);
+                    isQuizActive = true;
+                    wrongWords = [];
+                    const startBtn = document.getElementById('start-quiz-btn');
+                    startBtn.innerText = "下一題";
+                    startBtn.style.backgroundColor = "#3498db";
+                    startBtn.style.display = "inline-block";
+                    if (randomBtn) randomBtn.style.display = "none";
+                    generateQuestion();
+                    return;
+                }
+            }
             if (randomBtn) randomBtn.style.display = "inline-block";
         }
 
@@ -5137,6 +5163,9 @@
                     quizQueue = [...wrongWords];
                 } else {
                     let filteredList = wordList.filter(w => currentQuizScope.includes(w.lesson));
+                    if (filteredList.length === 0 && customQuizPool && customQuizPool.length > 0) {
+                        filteredList = [...customQuizPool];
+                    }
                     if (filteredList.length === 0) {
                         alert("請至少選擇一個測驗範圍喔！");
                         return;
@@ -5169,7 +5198,7 @@
                     startBtn.innerText = "🚀 開始測驗";
                     startBtn.style.backgroundColor = "#e67e22";
                     startBtn.style.display = "inline-block";
-                    if (randomBtn) randomBtn.style.display = "inline-block";
+                    if (randomBtn) randomBtn.style.display = (customQuizPool && customQuizPool.length > 0 && currentQuizScope.length === 0) ? "none" : "inline-block";
                 } else {
                     document.getElementById('quiz-result').innerHTML = "您有 " + wrongWords.length + " 個不熟悉的單字：<br><br>" + wrongWords.map(w => w.en + " (" + w.zh + ")").join("<br>");
                     document.getElementById('quiz-result').style.color = "#c0392b";
