@@ -3987,6 +3987,7 @@
         </div>
         
         <div id="quiz-container" style="background: #fff; padding: 25px; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+            <div id="quiz-progress" style="display: none; margin-bottom: 12px; padding: 8px 14px; background-color: #eef7ff; color: #2980b9; border-left: 4px solid #3498db; border-radius: 4px; font-weight: bold; font-size: 1.05em;"></div>
             <div id="quiz-question" style="font-size: 1.4em; font-weight: bold; margin-bottom: 20px; color: #2c3e50;">準備好了嗎？請點擊下方按鈕開始！</div>
             <div id="quiz-options" style="display: flex; flex-direction: column; gap: 12px;">
                 <!-- 選項會動態產生在這裡 -->
@@ -5790,6 +5791,9 @@
             isQuizActive = false;
             document.getElementById('quiz-options').innerHTML = '';
             document.getElementById('quiz-result').innerText = '';
+            window._quizTotalCount = 0;
+            const progResetEl = document.getElementById('quiz-progress');
+            if (progResetEl) { progResetEl.style.display = 'none'; progResetEl.innerText = ''; }
             document.getElementById('quiz-question').innerText = "準備好了嗎？請點擊下方按鈕開始！";
             document.getElementById('start-quiz-btn').style.display = "inline-block";
             document.getElementById('start-quiz-btn').innerText = "🚀 開始測驗";
@@ -5839,6 +5843,7 @@
                 }
                 
                 quizQueue.sort(() => Math.random() - 0.5);
+                window._quizTotalCount = quizQueue.length;
                 wrongWords = [];
                 isQuizActive = true;
             } else {
@@ -5851,6 +5856,9 @@
             if (quizQueue.length === 0) {
                 const optionsContainer = document.getElementById('quiz-options');
                 optionsContainer.innerHTML = '';
+                window._quizTotalCount = 0;
+                const progEndEl = document.getElementById('quiz-progress');
+                if (progEndEl) { progEndEl.style.display = 'none'; progEndEl.innerText = ''; }
                 document.getElementById('quiz-question').innerText = "🎉 測驗結束！";
                 
                 if (wrongWords.length === 0) {
@@ -5887,7 +5895,18 @@
             document.getElementById('quiz-result').innerText = '';
 
             // 從 queue 取出一個題目
+            if (!window._quizTotalCount) window._quizTotalCount = quizQueue.length;
             currentQuestion = quizQueue.shift();
+            const progEl = document.getElementById('quiz-progress');
+            if (progEl) {
+                const totalCount = window._quizTotalCount || (quizQueue.length + 1);
+                const currentNum = totalCount - quizQueue.length;
+                const remainingCount = quizQueue.length + 1;
+                progEl.style.display = 'block';
+                progEl.innerText = quizQueue.length > 0
+                    ? `📊 剩餘 ${remainingCount} 題（第 ${currentNum} / ${totalCount} 題，本題後還有 ${quizQueue.length} 題）`
+                    : `📊 剩餘 1 題（第 ${currentNum} / ${totalCount} 題，最後一題！）`;
+            }
             
             let activeMode = currentQuizMode;
             if (activeMode === 'mix') {
