@@ -280,8 +280,8 @@
 
 <div id="學校單字" class="monthcontent" style="display: none;">
     <div class="tab">
-        <button class="tablinks" onclick="openTab(event, 'School-L3')">🏫 學校 L3 (第42課)</button>
-        <button class="tablinks" onclick="openTab(event, 'School-L3-Jobs')">🏫 學校 L3 職業 (第43課)</button>
+        <button class="tablinks" onclick="openTab(event, 'School-L3')">🏫 學校 L3</button>
+        <button class="tablinks" onclick="openTab(event, 'School-L3-Jobs')">🏫 學校 L4</button>
     </div>
 </div>
 
@@ -3808,7 +3808,7 @@
     </div>
 
     <div id="School-L3-Jobs" class="tabcontent">
-        <h2>單字清單 <span style="font-size: 0.7em; color: #7f8c8d;">(學校 L3 職業單字)</span></h2>
+        <h2>單字清單 <span style="font-size: 0.7em; color: #7f8c8d;">(學校 L4 單字)</span></h2>
         <table>
             <thead>
                 <tr>
@@ -3877,7 +3877,7 @@
 
         <div class="analysis" style="margin-top: 25px; padding: 20px; background-color: #f4fdf8; border-left: 6px solid #2ecc71; border-radius: 4px;">
             <h3 style="margin-top: 0; color: #27ae60;">🔍 字根字首字尾歸納</h3>
-            <p style="color: #444; line-height: 1.6;">這組學校 L3 職業單字，主要可以分為 4 類字根字首字尾與主題情境歸納：</p>
+            <p style="color: #444; line-height: 1.6;">這組學校 L4 單字，主要可以分為 4 類字根字首字尾與主題情境歸納：</p>
 
             <h4 style="color: #2c3e50; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-top: 20px;">1. 職業字尾（-er / -ier / -ist / -man / -ary）：表示「做…的人」</h4>
             <ul style="line-height: 1.6; color: #444;">
@@ -3973,8 +3973,8 @@
             <button id="scope-41-btn" onclick="toggleQuizScope(41)" style="padding: 6px 15px; font-size: 1em; background-color: #ecf0f1; color: #333; border: 1px solid #ccc; border-radius: 5px; cursor: pointer;">11/3 (第41課)</button>
             <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #ccc;">
                 <strong style="margin-right: 10px; color: #2980b9;">🏫 學校單字測驗範圍：</strong>
-                <button id="scope-42-btn" onclick="toggleQuizScope(42)" style="padding: 6px 15px; font-size: 1em; background-color: #ecf0f1; color: #333; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; margin-right: 5px;">🏫 學校 L3 (第42課)</button>
-                <button id="scope-43-btn" onclick="toggleQuizScope(43)" style="padding: 6px 15px; font-size: 1em; background-color: #ecf0f1; color: #333; border: 1px solid #ccc; border-radius: 5px; cursor: pointer;">🏫 學校 L3 職業 (第43課)</button>
+                <button id="scope-42-btn" onclick="toggleQuizScope(42)" style="padding: 6px 15px; font-size: 1em; background-color: #ecf0f1; color: #333; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; margin-right: 5px;">🏫 學校 L3</button>
+                <button id="scope-43-btn" onclick="toggleQuizScope(43)" style="padding: 6px 15px; font-size: 1em; background-color: #ecf0f1; color: #333; border: 1px solid #ccc; border-radius: 5px; cursor: pointer;">🏫 學校 L4</button>
             </div>
         </div>
         
@@ -5333,7 +5333,8 @@
                     barHtml += `<button onclick="selectRandomMistakes(10)" style="padding: 4px 10px; font-size: 0.9em; background-color: #8e44ad; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px;">🎲 隨機勾選 10 題</button>`;
 
                     Object.keys(lessonCounts).sort((a, b) => Number(a) - Number(b)).forEach(l => {
-                        barHtml += `<button onclick="selectMistakesByLesson(${l})" title="點擊勾選/取消勾選第 ${l} 課的錯題" style="padding: 3px 9px; font-size: 0.88em; background-color: #ecf0f1; color: #2c3e50; border: 1px solid #bdc3c7; border-radius: 12px; cursor: pointer; margin-right: 5px; margin-top: 4px;">第 ${l} 課 (${lessonCounts[l]})</button>`;
+                        const lessonLabel = Number(l) === 42 ? '學校 L3' : (Number(l) === 43 ? '學校 L4' : `第 ${l} 課`);
+                        barHtml += `<button onclick="selectMistakesByLesson(${l})" title="點擊勾選/取消勾選 ${lessonLabel} 的錯題" style="padding: 3px 9px; font-size: 0.88em; background-color: #ecf0f1; color: #2c3e50; border: 1px solid #bdc3c7; border-radius: 12px; cursor: pointer; margin-right: 5px; margin-top: 4px;">${lessonLabel} (${lessonCounts[l]})</button>`;
                     });
                     quickBar.innerHTML = barHtml;
                 }
@@ -5388,7 +5389,7 @@
                     // 出處欄位
                     let tdLesson = document.createElement('td');
                     tdLesson.style.cssText = 'border: 1px solid #e0e0e0; padding: 14px;';
-                    tdLesson.innerText = `第 ${w.lesson} 課`;
+                    tdLesson.innerText = Number(w.lesson) === 42 ? '學校 L3' : (Number(w.lesson) === 43 ? '學校 L4' : `第 ${w.lesson} 課`);
 
                     // 單筆刪除按鈕欄位
                     let tdAction = document.createElement('td');
