@@ -4479,9 +4479,9 @@
                         <input type="checkbox" id="select-all-imported" onchange="toggleSelectAllImported(this)" title="全選 / 取消全選" style="width: 18px; height: 18px; cursor: pointer;">
                     </th>
                     <th style="border: 1px solid #e0e0e0; padding: 14px; background-color: #f8f9fa;">單字</th>
-                    <th style="border: 1px solid #e0e0e0; padding: 14px; background-color: #f8f9fa; width: 110px;">詞性</th>
+                    <th style="border: 1px solid #e0e0e0; padding: 14px; background-color: #f8f9fa; width: 150px;">詞性（點擊 ✏️ 可修改）</th>
                     <th style="border: 1px solid #e0e0e0; padding: 14px; background-color: #f8f9fa;">中文意思（點擊 ✏️ 可修改）</th>
-                    <th style="border: 1px solid #e0e0e0; padding: 14px; background-color: #f8f9fa; width: 120px;">出處</th>
+                    <th style="border: 1px solid #e0e0e0; padding: 14px; background-color: #f8f9fa; width: 170px;">出處（點擊 ✏️ 可修改）</th>
                     <th style="border: 1px solid #e0e0e0; padding: 14px; background-color: #f8f9fa; width: 100px; text-align: center;">操作</th>
                 </tr>
             </thead>
@@ -6043,8 +6043,12 @@
             reader.readAsText(file, 'UTF-8');
         }
 
-        function formatImportedLessonLabel(lessonNum) {
-            const n = Number(lessonNum);
+        function formatImportedLessonLabel(lessonOrObj) {
+            if (lessonOrObj && typeof lessonOrObj === 'object') {
+                if (lessonOrObj.sourceText) return lessonOrObj.sourceText;
+                return formatImportedLessonLabel(lessonOrObj.lesson);
+            }
+            const n = Number(lessonOrObj);
             if (n === 103) return '學校 L3';
             if (n === 104) return '學校 L4';
             if (n === 999 || !n) return '自訂匯入';
@@ -6107,15 +6111,50 @@
             selectAllCb.checked = (checkedCount === checkboxes.length);
         }
 
+        function editImportedWordPos(enWord) {
+            const target = importedWordList.find(w => w.en.toLowerCase() === enWord.toLowerCase());
+            if (!target) return;
+            const newPos = prompt(`請輸入「${target.en}」的詞性（例如 n. / v. / adj. / adv. / phr.）：`, target.pos || '');
+            if (newPos === null) return;
+            target.pos = newPos.trim();
+            saveImportedWordList();
+        }
+
         function editImportedWordZh(enWord) {
             const target = importedWordList.find(w => w.en.toLowerCase() === enWord.toLowerCase());
             if (!target) return;
             const currentZh = target.zh === '（點擊 ✏️ 補充中文意思）' ? '' : target.zh;
             const newZh = prompt(`請輸入「${target.en}」的中文意思：`, currentZh);
             if (newZh === null) return;
-            const newPos = prompt(`請輸入「${target.en}」的詞性（例如 n. / v. / adj.，可留空）：`, target.pos || '');
             target.zh = newZh.trim() || '（點擊 ✏️ 補充中文意思）';
-            if (newPos !== null) target.pos = newPos.trim();
+            saveImportedWordList();
+        }
+
+        function editImportedWordSource(enWord) {
+            const target = importedWordList.find(w => w.en.toLowerCase() === enWord.toLowerCase());
+            if (!target) return;
+            const currentLabel = formatImportedLessonLabel(target);
+            const newSource = prompt(`請輸入「${target.en}」的出處（可輸入課次數字 1~44、學校 L3、學校 L4，或自訂文字）：`, currentLabel);
+            if (newSource === null) return;
+            const trimmed = newSource.trim();
+            if (!trimmed || trimmed === '自訂匯入') {
+                target.lesson = 999;
+                delete target.sourceText;
+            } else if (/^(?:學校\s*)?L3$/i.test(trimmed)) {
+                target.lesson = 103;
+                delete target.sourceText;
+            } else if (/^(?:學校\s*)?L4$/i.test(trimmed)) {
+                target.lesson = 104;
+                delete target.sourceText;
+            } else {
+                const numMatch = trimmed.match(/^(?:第\s*)?(\d+)(?:\s*課)?$/);
+                if (numMatch) {
+                    target.lesson = parseInt(numMatch[1], 10);
+                    delete target.sourceText;
+                } else {
+                    target.sourceText = trimmed;
+                }
+            }
             saveImportedWordList();
         }
 
@@ -6153,7 +6192,7 @@
             let textContent = '英語單字學習簿 - 匯入單字清單\n\n';
             importedWordList.forEach(w => {
                 const posStr = w.pos ? ` (${w.pos})` : '';
-                textContent += `${w.en}${posStr} - ${w.zh} (${formatImportedLessonLabel(w.lesson)})\n`;
+                textContent += `${w.en}${posStr} - ${w.zh} (${formatImportedLessonLabel(w)})\n`;
             });
             const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
             const url = URL.createObjectURL(blob);
@@ -6346,10 +6385,18 @@
                 tdWord.appendChild(strongEl);
                 tdWord.appendChild(speakBtn);
 
-                // 詞性欄位
+                // 詞性與編輯按鈕欄位
                 const tdPos = document.createElement('td');
                 tdPos.style.cssText = 'border: 1px solid #e0e0e0; padding: 14px; color: #555;';
-                tdPos.innerText = w.pos || '-';
+                const posSpan = document.createElement('span');
+                posSpan.innerText = w.pos || '-';
+                const editPosBtn = document.createElement('button');
+                editPosBtn.innerHTML = '✏️';
+                editPosBtn.title = '修改詞性';
+                editPosBtn.style.cssText = 'background: none; border: none; cursor: pointer; font-size: 0.95em; margin-left: 6px; padding: 2px 5px;';
+                editPosBtn.onclick = function() { editImportedWordPos(w.en); };
+                tdPos.appendChild(posSpan);
+                tdPos.appendChild(editPosBtn);
 
                 // 中文意思與編輯按鈕欄位
                 const tdZh = document.createElement('td');
@@ -6361,16 +6408,24 @@
                 }
                 const editBtn = document.createElement('button');
                 editBtn.innerHTML = '✏️';
-                editBtn.title = '修改中文意思與詞性';
+                editBtn.title = '修改中文意思';
                 editBtn.style.cssText = 'background: none; border: none; cursor: pointer; font-size: 0.95em; margin-left: 8px; padding: 2px 5px;';
                 editBtn.onclick = function() { editImportedWordZh(w.en); };
                 tdZh.appendChild(zhSpan);
                 tdZh.appendChild(editBtn);
 
-                // 出處欄位
+                // 出處與編輯按鈕欄位
                 const tdLesson = document.createElement('td');
                 tdLesson.style.cssText = 'border: 1px solid #e0e0e0; padding: 14px;';
-                tdLesson.innerText = formatImportedLessonLabel(w.lesson);
+                const lessonSpan = document.createElement('span');
+                lessonSpan.innerText = formatImportedLessonLabel(w);
+                const editSourceBtn = document.createElement('button');
+                editSourceBtn.innerHTML = '✏️';
+                editSourceBtn.title = '修改出處';
+                editSourceBtn.style.cssText = 'background: none; border: none; cursor: pointer; font-size: 0.95em; margin-left: 6px; padding: 2px 5px;';
+                editSourceBtn.onclick = function() { editImportedWordSource(w.en); };
+                tdLesson.appendChild(lessonSpan);
+                tdLesson.appendChild(editSourceBtn);
 
                 // 單筆刪除按鈕欄位
                 const tdAction = document.createElement('td');
