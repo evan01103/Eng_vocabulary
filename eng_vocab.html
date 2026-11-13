@@ -6930,6 +6930,17 @@
                 // 點擊下一題時，如果目前的題目還沒答對（或未答完就跳過），才記錄到錯題本
                 if (isQuizActive && currentQuestion && !currentQuestionPassed) {
                     addMistake(currentQuestion);
+                    const dictInput = document.getElementById('dictation-input');
+                    if (dictInput && !window._dictationRevealed) {
+                        window._dictationRevealed = true;
+                        dictInput.disabled = true;
+                        const resultDiv = document.getElementById('quiz-result');
+                        if (resultDiv) {
+                            resultDiv.innerText = `💡 正確答案：${currentQuestion.en} (${formatZhWithPos(currentQuestion)})`;
+                            resultDiv.style.color = "#c0392b";
+                        }
+                        return;
+                    }
                 }
             }
             
@@ -6970,6 +6981,7 @@
 
         function generateQuestion() {
             currentQuestionPassed = false;
+            window._dictationRevealed = false;
             const optionsContainer = document.getElementById('quiz-options');
             optionsContainer.innerHTML = '';
             document.getElementById('quiz-result').innerText = '';
@@ -7005,7 +7017,7 @@
                     generateMultipleChoice(false);
                 }
             } else if (activeMode === 'dict') {
-                document.getElementById('quiz-question').innerText = "🎧 請聽發音，拼出正確的英文單字並選擇中文意思：";
+                document.getElementById('quiz-question').innerText = "🎧 請聽發音，拼出正確的英文單字：";
                 generateTextInput(true);
             } else if (activeMode === 'spell') {
                 document.getElementById('quiz-question').innerText = "✍️ 「" + currentQuestion.zh + "」的英文是？ (請拼寫)";
@@ -7154,7 +7166,7 @@
                     };
                     optionsDiv.appendChild(btn);
                 });
-                optionsContainer.appendChild(optionsDiv);
+                // 聽寫模式不顯示中文選擇題
             }
 
             // 送出按鈕
@@ -7183,7 +7195,7 @@
 
         function checkDictation() {
             const inputField = document.getElementById('dictation-input');
-            if(!inputField) return;
+            if(!inputField || inputField.disabled) return;
             const userAnswer = inputField.value.trim().toLowerCase();
             const resultDiv = document.getElementById('quiz-result');
             
@@ -7208,7 +7220,8 @@
 
             if (spellCorrect && mcCorrect) {
                 currentQuestionPassed = true;
-                resultDiv.innerText = "✅ 答對了！";
+                window._dictationRevealed = true;
+                resultDiv.innerText = `✅ 答對了！\n${currentQuestion.en} (${formatZhWithPos(currentQuestion)})`;
                 resultDiv.style.color = "#27ae60";
                 inputField.disabled = true;
                 inputField.style.borderColor = "#2ecc71";
@@ -7221,7 +7234,7 @@
                         }
                     });
                 }
-                setTimeout(() => { startQuiz(); }, 500);
+                document.getElementById('start-quiz-btn').style.display = "inline-block";
             } else {
                 let errorMsg = [];
                 if (!spellCorrect && userAnswer === "") {
@@ -7280,11 +7293,12 @@
 
             if (selected.en === correct.en) {
                 currentQuestionPassed = true;
-                resultDiv.innerText = "✅ 答對了！";
+                window._dictationRevealed = true;
+                resultDiv.innerText = `✅ 答對了！\n${currentQuestion.en} (${formatZhWithPos(currentQuestion)})`;
                 resultDiv.style.color = "#27ae60";
                 btnEl.style.backgroundColor = "#d5f5e3"; // 淺綠色
                 btnEl.style.borderColor = "#2ecc71";
-                setTimeout(() => { startQuiz(); }, 500);
+                document.getElementById('start-quiz-btn').style.display = "inline-block";
             } else {
                 resultDiv.innerText = `❌ 答錯了！正確答案是：${correct.en} (${formatZhWithPos(correct)})`;
                 resultDiv.style.color = "#c0392b";
