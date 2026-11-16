@@ -4447,6 +4447,19 @@
         <h2>📂 匯入單字清單</h2>
         <p>您可以直接貼上單字或上傳檔案（<code>.txt</code> / <code>.csv</code>）來建立自訂練習清單。若輸入的英文單字已在課本單字庫中，系統會自動帶入詞性、中文意思與課次；也支援匯入課本以外的新單字！</p>
 
+        <div style="margin-bottom: 18px; padding: 14px 18px; background-color: #eef7ff; border-left: 5px solid #2980b9; border-radius: 6px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;">
+            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
+                <strong style="color: #2c3e50;">🐙 GitHub 跨裝置同步：</strong>
+                <button onclick="syncImportedWithCloud(true)" style="padding: 6px 12px; font-size: 0.95em; background-color: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer;">🔄 與 GitHub 同步</button>
+                <button onclick="forcePushImportedToCloud()" title="將這台裝置目前的匯入清單上傳到 GitHub 與雲端" style="padding: 6px 12px; font-size: 0.95em; background-color: #8e44ad; color: white; border: none; border-radius: 4px; cursor: pointer;">📤 上傳本機到 GitHub</button>
+                <button onclick="forcePullImportedFromCloud()" title="直接從 GitHub 與雲端下載匯入清單到這台裝置" style="padding: 6px 12px; font-size: 0.95em; background-color: #d35400; color: white; border: none; border-radius: 4px; cursor: pointer;">📥 從 GitHub 下載到本機</button>
+                <button onclick="configureGitHubToken()" title="設定 GitHub Token 後，網頁新增/刪除/修改匯入清單會直接自動寫入 GitHub 儲存庫" style="padding: 6px 12px; font-size: 0.95em; background-color: #24292e; color: white; border: none; border-radius: 4px; cursor: pointer;">🔑 GitHub Token (選填)</button>
+            </div>
+            <div id="imported-cloud-sync-status" style="font-size: 0.95em; color: #27ae60; font-weight: bold;">
+                🟢 GitHub 同步準備中...
+            </div>
+        </div>
+
         <div style="margin-bottom: 20px; padding: 18px; background-color: #f4f9fd; border: 1px solid #bdd7ee; border-left: 5px solid #2980b9; border-radius: 6px;">
             <div style="margin-bottom: 10px; font-weight: bold; color: #2c3e50;">
                 ✍️ 貼上或輸入單字（支援逗號分隔，或每行一個「英文 - 中文」）：
@@ -4546,6 +4559,9 @@
             document.getElementById(tabName).style.display = "block";
             evt.currentTarget.className += " active";
 
+            if ((tabName === 'ImportListTab' || tabName === 'QuizTab') && typeof syncImportedWithCloud === 'function') {
+                syncImportedWithCloud(false);
+            }
             if ((tabName === 'MistakeTab' || tabName === 'QuizTab') && typeof syncMistakesWithCloud === 'function') {
                 syncMistakesWithCloud(false);
             }
@@ -5072,6 +5088,7 @@
                 localStorage.setItem('eng_vocab_gh_token', cleaned);
                 alert('✅ 已儲存 GitHub Token（僅保存在本機瀏覽器）！');
                 pushMistakesToCloud();
+                if (typeof pushImportedToCloud === 'function') pushImportedToCloud();
                 return true;
             } else {
                 localStorage.removeItem('eng_vocab_gh_token');
@@ -5854,8 +5871,28 @@
             }
         }
 
-        // 匯入單字清單邏輯（支援貼上文字、上傳 .txt/.csv、勾選測驗、加入錯題本）
+        // 匯入單字清單邏輯（支援貼上文字、上傳 .txt/.csv、勾選測驗、加入錯題本、跨裝置即時同步）
         let importedWordList = [];
+        let importedMeta = { v: 0, u: 0, c: 0, d: [], dirty: false };
+        let isImportedCloudSyncing = false;
+        let importedSseSource = null;
+        const GITHUB_IMPORT_SYNC_PATH = 'imported_sync.json';
+        const RELAY_IMPORT_KV_KEY = 'ev_imp_v2_evan01103';
+        const RELAY_IMPORT_NTFY_TOPIC = 'eng_vocab_imp_v2_evan01103';
+
+        function updateImportedCloudStatusUI(text, color) {
+            const el = document.getElementById('imported-cloud-sync-status');
+            if (el) {
+                el.innerText = text;
+                if (color) el.style.color = color;
+            }
+        }
+
+        function saveLocalImportedState() {
+            localStorage.setItem('eng_vocab_imported_list', JSON.stringify(importedWordList));
+            localStorage.setItem('eng_vocab_imported_meta', JSON.stringify(importedMeta));
+            renderImportedListTable();
+        }
 
         function loadImportedWordList() {
             const saved = localStorage.getItem('eng_vocab_imported_list');
@@ -5869,13 +5906,381 @@
                     importedWordList = [];
                 }
             }
+            const savedMeta = localStorage.getItem('eng_vocab_imported_meta');
+            if (savedMeta) {
+                try {
+                    const parsedMeta = JSON.parse(savedMeta);
+                    importedMeta = {
+                        v: parsedMeta.v || 0,
+                        u: parsedMeta.u || 0,
+                        c: parsedMeta.c || 0,
+                        d: Array.isArray(parsedMeta.d) ? parsedMeta.d : [],
+                        dirty: Boolean(parsedMeta.dirty)
+                    };
+                } catch (e) {
+                    importedMeta = { v: 0, u: 0, c: 0, d: [], dirty: false };
+                }
+            } else if (importedWordList.length > 0) {
+                importedMeta = { v: 1, u: Date.now(), c: 0, d: [], dirty: true };
+            }
             renderImportedListTable();
+            setupRealtimeImportedSyncStream();
+            syncImportedWithCloud(false);
         }
 
         function saveImportedWordList() {
-            localStorage.setItem('eng_vocab_imported_list', JSON.stringify(importedWordList));
-            renderImportedListTable();
+            importedMeta.v = (importedMeta.v || 1) + 1;
+            importedMeta.u = Date.now();
+            importedMeta.c = importedWordList.length === 0 ? importedMeta.v : 0;
+            importedMeta.dirty = true;
+            saveLocalImportedState();
+            pushImportedToCloud();
         }
+
+        function encodeImportedKvPayload() {
+            const payloadObj = {
+                v: importedMeta.v || 1,
+                u: importedMeta.u || Date.now(),
+                c: importedMeta.c || 0,
+                items: importedWordList.map(w => {
+                    const found = wordList.find(std => std.en.toLowerCase() === w.en.toLowerCase());
+                    if (found && found.pos === w.pos && found.zh === w.zh && found.lesson === w.lesson && !w.sourceText) {
+                        return w.en;
+                    }
+                    const obj = { en: w.en, pos: w.pos || '', zh: w.zh || '', lesson: w.lesson || 999 };
+                    if (w.sourceText) obj.sourceText = w.sourceText;
+                    return obj;
+                })
+            };
+            return toBase64Url(JSON.stringify(payloadObj));
+        }
+
+        function parseImportedKvPayload(rawStr) {
+            if (!rawStr) return null;
+            const cleaned = String(rawStr).trim().replace(/^"+|"+$/g, '');
+            if (!cleaned || cleaned === 'null' || cleaned === 'EMPTY') return null;
+            try {
+                const decoded = fromBase64Url(cleaned);
+                const parsed = JSON.parse(decoded);
+                if (!parsed || typeof parsed !== 'object') return null;
+                const rawItems = Array.isArray(parsed.items) ? parsed.items : [];
+                const items = rawItems.map(item => {
+                    if (typeof item === 'string') {
+                        const found = wordList.find(w => w.en.toLowerCase() === item.toLowerCase());
+                        return found ? { ...found } : { en: item, pos: '', zh: '（點擊 ✏️ 補充中文意思）', lesson: 999 };
+                    }
+                    return item;
+                }).filter(Boolean);
+                return {
+                    v: parsed.v || 1,
+                    u: parsed.u || Date.now(),
+                    c: parsed.c || 0,
+                    w: items.map(x => x.en),
+                    items: items
+                };
+            } catch (e) {
+                return null;
+            }
+        }
+
+        async function fetchGitHubImportedPayload() {
+            const token = getGitHubToken();
+            const headers = { 'Accept': 'application/vnd.github.v3+json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+
+            try {
+                const apiRes = await fetch(`https://api.github.com/repos/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/contents/${GITHUB_IMPORT_SYNC_PATH}?ref=main&_t=${Date.now()}`, {
+                    headers,
+                    cache: 'no-store'
+                });
+                if (apiRes && apiRes.ok) {
+                    const data = await apiRes.json();
+                    if (data && data.sha) window._lastGitHubImportSyncSha = data.sha;
+                    if (data && data.content) {
+                        const rawJson = decodeURIComponent(escape(atob(data.content.replace(/\s/g, ''))));
+                        const parsed = JSON.parse(rawJson);
+                        if (parsed && Array.isArray(parsed.items)) {
+                            parsed.v = parsed.v || 1;
+                            return parsed;
+                        }
+                    }
+                }
+            } catch (e) {}
+
+            try {
+                const rawRes = await fetch(`https://raw.githubusercontent.com/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/main/${GITHUB_IMPORT_SYNC_PATH}?_t=${Date.now()}`, { cache: 'no-store' });
+                if (rawRes && rawRes.ok) {
+                    const parsed = await rawRes.json();
+                    if (parsed && Array.isArray(parsed.items)) {
+                        parsed.v = parsed.v || 1;
+                        return parsed;
+                    }
+                }
+            } catch (e) {}
+
+            try {
+                const localRes = await fetch(`./${GITHUB_IMPORT_SYNC_PATH}?_t=${Date.now()}`, { cache: 'no-store' });
+                if (localRes && localRes.ok) {
+                    const parsed = await localRes.json();
+                    if (parsed && Array.isArray(parsed.items)) {
+                        parsed.v = parsed.v || 1;
+                        return parsed;
+                    }
+                }
+            } catch (e) {}
+
+            return null;
+        }
+
+        async function fetchAllImportedCloudPayloads() {
+            const [ghPayload, kvRaw, ntfyText] = await Promise.all([
+                fetchGitHubImportedPayload().catch(() => null),
+                readChunkedKv(RELAY_IMPORT_KV_KEY).catch(() => null),
+                fetch(`https://ntfy.sh/${RELAY_IMPORT_NTFY_TOPIC}/json?poll=1&since=all`, { cache: 'no-store' })
+                    .then(r => r.ok ? r.text() : null)
+                    .catch(() => null)
+            ]);
+            const kvPayload = parseImportedKvPayload(kvRaw);
+            let ntfyPayload = null;
+            if (ntfyText) {
+                const lines = ntfyText.trim().split(/\r?\n/).filter(Boolean);
+                for (let i = lines.length - 1; i >= 0; i--) {
+                    try {
+                        const evt = JSON.parse(lines[i]);
+                        if (evt && evt.message) {
+                            const msgObj = JSON.parse(evt.message);
+                            if (msgObj && msgObj.type === 'eng_vocab_import_sync_v2') {
+                                msgObj.v = msgObj.v || 1;
+                                ntfyPayload = msgObj;
+                                break;
+                            }
+                        }
+                    } catch (e) {}
+                }
+            }
+            const list = [ghPayload, kvPayload, ntfyPayload].filter(Boolean).sort((a, b) => (a.v || 1) - (b.v || 1));
+            return list.length > 0 ? list[list.length - 1] : null;
+        }
+
+        async function pushGitHubImportedPayload(fullPayload) {
+            const token = getGitHubToken();
+            if (!token) return null;
+            const headers = {
+                'Accept': 'application/vnd.github+json',
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            };
+            try {
+                let sha = window._lastGitHubImportSyncSha || null;
+                const getRes = await fetch(`https://api.github.com/repos/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/contents/${GITHUB_IMPORT_SYNC_PATH}?ref=main&_t=${Date.now()}`, {
+                    headers,
+                    cache: 'no-store'
+                }).catch(() => null);
+                if (getRes && getRes.ok) {
+                    const getJson = await getRes.json();
+                    if (getJson && getJson.sha) sha = getJson.sha;
+                }
+                const contentB64 = btoa(unescape(encodeURIComponent(JSON.stringify(fullPayload, null, 2))));
+                const bodyObj = {
+                    message: `sync(imported): v${fullPayload.v} (${(fullPayload.items || []).length} words)`,
+                    content: contentB64,
+                    branch: 'main'
+                };
+                if (sha) bodyObj.sha = sha;
+                const putRes = await fetch(`https://api.github.com/repos/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/contents/${GITHUB_IMPORT_SYNC_PATH}`, {
+                    method: 'PUT',
+                    headers,
+                    body: JSON.stringify(bodyObj)
+                });
+                if (putRes && putRes.ok) {
+                    const putJson = await putRes.json().catch(() => null);
+                    if (putJson && putJson.content && putJson.content.sha) {
+                        window._lastGitHubImportSyncSha = putJson.content.sha;
+                    }
+                    return { ok: true };
+                }
+            } catch (e) {}
+            return null;
+        }
+
+        async function pushImportedToCloud() {
+            updateImportedCloudStatusUI('🔄 正在同步匯入清單變更...', '#e67e22');
+
+            const cloudCur = await fetchAllImportedCloudPayloads().catch(() => null);
+            const cloudV = cloudCur ? (cloudCur.v || 1) : 0;
+            if ((importedMeta.v || 1) <= cloudV) {
+                importedMeta.v = cloudV + 1;
+            }
+            importedMeta.c = importedWordList.length === 0 ? importedMeta.v : 0;
+
+            const encodedCompact = encodeImportedKvPayload();
+            const fullPayload = {
+                type: 'eng_vocab_import_sync_v2',
+                clientId: CLIENT_INSTANCE_ID,
+                v: importedMeta.v,
+                u: Date.now(),
+                c: importedMeta.c || 0,
+                w: importedWordList.map(w => w.en),
+                d: (importedMeta.d || []).slice(-250),
+                items: importedWordList
+            };
+
+            const kvPromise = writeChunkedKv(RELAY_IMPORT_KV_KEY, encodedCompact);
+            const ntfyPromise = fetch(`https://ntfy.sh/${RELAY_IMPORT_NTFY_TOPIC}`, {
+                method: 'POST',
+                body: JSON.stringify(fullPayload)
+            }).catch(() => null);
+            const ghPromise = pushGitHubImportedPayload(fullPayload);
+
+            const [kvRes, ntfyRes, ghRes] = await Promise.all([kvPromise, ntfyPromise, ghPromise]);
+            if ((kvRes && kvRes.ok) || (ntfyRes && ntfyRes.ok) || (ghRes && ghRes.ok)) {
+                importedMeta.dirty = false;
+                saveLocalImportedState();
+                updateImportedCloudStatusUI(`🟢 已自動同步 (版本 v${importedMeta.v} · ${formatSyncTime()} · 共 ${importedWordList.length} 題)`, '#27ae60');
+                if (window._showImportedForcePushAlert) {
+                    window._showImportedForcePushAlert = false;
+                    alert(`✅ 已將這台裝置目前的 ${importedWordList.length} 個匯入單字同步上傳（版本 v${importedMeta.v}）！\n另一台裝置會自動同步更新（或點「🔄 與 GitHub 同步」）。`);
+                }
+            } else {
+                updateImportedCloudStatusUI('⚪ 已儲存於本機（待網路連線後自動同步）', '#7f8c8d');
+            }
+        }
+
+        function applyImportedCloudSnapshot(cloudData) {
+            if (!cloudData) return;
+            const rawItems = Array.isArray(cloudData.items) ? cloudData.items : [];
+            const seen = new Set();
+            const cleanItems = [];
+            rawItems.forEach(item => {
+                if (!item || !item.en) return;
+                const lower = item.en.trim().toLowerCase();
+                if (!lower || seen.has(lower)) return;
+                seen.add(lower);
+                const found = wordList.find(w => w.en.toLowerCase() === lower);
+                const merged = {
+                    en: item.en.trim(),
+                    pos: item.pos !== undefined ? item.pos : (found ? found.pos : ''),
+                    zh: item.zh || (found ? found.zh : '（點擊 ✏️ 補充中文意思）'),
+                    lesson: item.lesson || (found ? found.lesson : 999)
+                };
+                if (item.sourceText) merged.sourceText = item.sourceText;
+                cleanItems.push(merged);
+            });
+            importedWordList = cleanItems;
+            importedMeta.v = cloudData.v || 1;
+            importedMeta.u = cloudData.u || Date.now();
+            importedMeta.c = importedWordList.length === 0 ? (cloudData.c || importedMeta.v) : 0;
+            importedMeta.d = Array.isArray(cloudData.d) ? cloudData.d.slice(-250) : [];
+            importedMeta.dirty = false;
+            saveLocalImportedState();
+        }
+
+        async function forcePullImportedFromCloud() {
+            updateImportedCloudStatusUI('🔄 正在下載最新匯入清單...', '#e67e22');
+            try {
+                const latestCloud = await fetchAllImportedCloudPayloads();
+                if (!latestCloud) {
+                    updateImportedCloudStatusUI('⚪ 無法連線，請檢查網路', '#c0392b');
+                    alert('無法讀取雲端匯入清單資料，請確認網路連線正常後再試一次。');
+                    return;
+                }
+                applyImportedCloudSnapshot(latestCloud);
+                updateImportedCloudStatusUI(`🟢 已下載同步完成 (版本 v${importedMeta.v} · ${formatSyncTime()} · 共 ${importedWordList.length} 題)`, '#27ae60');
+                alert(`✅ 已成功同步最新匯入清單！目前共有 ${importedWordList.length} 個單字。`);
+            } catch (e) {
+                updateImportedCloudStatusUI('⚪ 下載失敗，請檢查網路連線', '#c0392b');
+                alert('下載失敗，請確認網路連線正常後再試一次。');
+            }
+        }
+
+        async function forcePushImportedToCloud() {
+            if (importedWordList.length === 0) {
+                if (!confirm('目前這台裝置的匯入清單沒有任何單字（0 題），確定要用「空白（0 題）」同步覆蓋另一台裝置嗎？')) {
+                    return;
+                }
+            }
+            importedMeta.v = (importedMeta.v || 1) + 1;
+            importedMeta.u = Date.now();
+            importedMeta.c = importedWordList.length === 0 ? importedMeta.v : 0;
+            importedMeta.dirty = true;
+            window._showImportedForcePushAlert = true;
+            saveLocalImportedState();
+            await pushImportedToCloud();
+        }
+
+        async function syncImportedWithCloud(isManual) {
+            if (isImportedCloudSyncing) return;
+            isImportedCloudSyncing = true;
+            if (isManual) {
+                updateImportedCloudStatusUI('🔄 正在同步最新匯入清單...', '#e67e22');
+            }
+
+            try {
+                const latestCloud = await fetchAllImportedCloudPayloads();
+                if (latestCloud) {
+                    const cloudV = latestCloud.v || 1;
+                    const localV = importedMeta.v || 0;
+
+                    if (importedMeta.dirty) {
+                        await pushImportedToCloud();
+                    } else if (cloudV > localV || (localV === 0 && (latestCloud.items || []).length > 0)) {
+                        applyImportedCloudSnapshot(latestCloud);
+                        updateImportedCloudStatusUI(`🟢 已自動同步 (版本 v${importedMeta.v} · ${formatSyncTime()} · 共 ${importedWordList.length} 題)`, '#27ae60');
+                    } else {
+                        const cloudSig = JSON.stringify(latestCloud.items || []);
+                        const localSig = JSON.stringify(importedWordList);
+                        if (cloudV === localV && cloudSig !== localSig && (latestCloud.items || []).length > 0 && importedWordList.length === 0) {
+                            applyImportedCloudSnapshot(latestCloud);
+                        }
+                        updateImportedCloudStatusUI(`🟢 已自動同步 (版本 v${importedMeta.v || cloudV} · ${formatSyncTime()} · 共 ${importedWordList.length} 題)`, '#27ae60');
+                    }
+                } else {
+                    updateImportedCloudStatusUI(`🟢 本機匯入清單 (${formatSyncTime()} · 共 ${importedWordList.length} 題)`, '#27ae60');
+                }
+            } catch (err) {
+                updateImportedCloudStatusUI('⚪ 離線模式（使用本機匯入清單）', '#7f8c8d');
+            } finally {
+                isImportedCloudSyncing = false;
+            }
+        }
+
+        function setupRealtimeImportedSyncStream() {
+            if (typeof EventSource === 'undefined') return;
+            if (importedSseSource) {
+                try { importedSseSource.close(); } catch (e) {}
+                importedSseSource = null;
+            }
+            try {
+                importedSseSource = new EventSource(`https://ntfy.sh/${RELAY_IMPORT_NTFY_TOPIC}/sse`);
+                importedSseSource.onmessage = function(e) {
+                    try {
+                        const evt = JSON.parse(e.data);
+                        if (evt && evt.message) {
+                            const msgObj = JSON.parse(evt.message);
+                            if (msgObj && msgObj.type === 'eng_vocab_import_sync_v2' && msgObj.clientId !== CLIENT_INSTANCE_ID) {
+                                applyImportedCloudSnapshot(msgObj);
+                                updateImportedCloudStatusUI(`🟢 已即時同步更新 (版本 v${importedMeta.v} · ${formatSyncTime()} · 共 ${importedWordList.length} 題)`, '#27ae60');
+                            }
+                        }
+                    } catch (err) {}
+                };
+            } catch (e) {}
+        }
+
+        setInterval(function() {
+            if (document.visibilityState === 'visible') {
+                syncImportedWithCloud(false);
+            }
+        }, 20000);
+
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible') {
+                syncImportedWithCloud(false);
+            }
+        });
+        window.addEventListener('focus', function() {
+            syncImportedWithCloud(false);
+        });
 
         function parseImportedRawText(rawContent) {
             const results = [];
