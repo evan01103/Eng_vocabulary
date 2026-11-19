@@ -4803,6 +4803,7 @@
                     </th>
                     <th style="border: 1px solid #e0e0e0; padding: 14px; background-color: #f8f9fa;">單字</th>
                     <th style="border: 1px solid #e0e0e0; padding: 14px; background-color: #f8f9fa;">中文意思</th>
+                    <th style="border: 1px solid #e0e0e0; padding: 14px; background-color: #f8f9fa;">例句 (Example)</th>
                     <th style="border: 1px solid #e0e0e0; padding: 14px; background-color: #f8f9fa;">出處</th>
                     <th style="border: 1px solid #e0e0e0; padding: 14px; background-color: #f8f9fa; width: 100px; text-align: center;">操作</th>
                 </tr>
@@ -6135,6 +6136,54 @@
             }
         }
 
+        let _vocabExampleCache = null;
+        function getVocabExampleCache() {
+            if (_vocabExampleCache) return _vocabExampleCache;
+            _vocabExampleCache = {};
+            const rows = document.querySelectorAll('table:not(#mistakes-table):not(#imported-list-table) tbody tr');
+            rows.forEach(tr => {
+                const wordEl = tr.querySelector('td:nth-child(1) strong.word');
+                const zhTd = tr.children[2];
+                const exTd = tr.children[3];
+                if (!wordEl || !exTd) return;
+                const enKey = wordEl.innerText.trim().toLowerCase();
+                if (!enKey) return;
+                const clone = exTd.cloneNode(true);
+                clone.querySelectorAll('button, .speak-btn').forEach(b => b.remove());
+                const html = clone.innerHTML.trim();
+                const text = clone.innerText.trim();
+                const enSentence = text.split('(')[0].trim();
+                const zhText = zhTd ? zhTd.innerText.trim() : '';
+                if (!_vocabExampleCache[enKey]) {
+                    _vocabExampleCache[enKey] = [];
+                }
+                _vocabExampleCache[enKey].push({ zh: zhText, html: html, enSentence: enSentence });
+            });
+            return _vocabExampleCache;
+        }
+
+        function getMistakeExampleInfo(w) {
+            if (!w || !w.en) return { html: '', enSentence: '' };
+            if (w.exampleHtml) {
+                const temp = document.createElement('div');
+                temp.innerHTML = w.exampleHtml;
+                return { html: w.exampleHtml, enSentence: temp.innerText.split('(')[0].trim() };
+            }
+            const cache = getVocabExampleCache();
+            const key = w.en.trim().toLowerCase();
+            const list = cache[key];
+            if (list && list.length > 0) {
+                const exact = list.find(item => item.zh === w.zh) || list[0];
+                return { html: exact.html, enSentence: exact.enSentence };
+            }
+            const cleanZh = (w.zh && w.zh !== '（點擊 ✏️ 補充中文意思）' && w.zh !== '（自訂或舊課次單字）')
+                ? w.zh.split(/[、；;，,]/)[0].trim()
+                : w.en;
+            const fallbackEn = `Let's practice the word "${w.en}" in a sentence.`;
+            const fallbackHtml = `Let's practice the word "<strong>${w.en}</strong>" in a sentence. (讓我們在句子中練習「${cleanZh}」這個單字。)`;
+            return { html: fallbackHtml, enSentence: fallbackEn };
+        }
+
         function renderMistakesTable() {
             const tbody = document.querySelector('#mistakes-table tbody');
             const msg = document.getElementById('no-mistake-msg');
@@ -6222,6 +6271,35 @@
                     tdZh.style.cssText = 'border: 1px solid #e0e0e0; padding: 14px;';
                     tdZh.innerText = w.zh;
 
+                    // 例句欄位
+                    let tdExample = document.createElement('td');
+                    tdExample.style.cssText = 'border: 1px solid #e0e0e0; padding: 14px; line-height: 1.5;';
+                    const exInfo = getMistakeExampleInfo(w);
+                    let exSpan = document.createElement('span');
+                    exSpan.innerHTML = exInfo.html;
+                    tdExample.appendChild(exSpan);
+                    if (exInfo.enSentence) {
+                        let exSpeakBtn = document.createElement('button');
+                        exSpeakBtn.className = 'speak-btn';
+                        exSpeakBtn.innerHTML = '🔊';
+                        exSpeakBtn.title = '聆聽例句發音 (女聲)';
+                        exSpeakBtn.onclick = function() {
+                            if (!('speechSynthesis' in window)) {
+                                alert('您的瀏覽器不支援語音發音功能。');
+                                return;
+                            }
+                            window.speechSynthesis.cancel();
+                            let utterance = new SpeechSynthesisUtterance(exInfo.enSentence);
+                            utterance.lang = 'en-US';
+                            utterance.rate = 0.72;
+                            if (englishFemaleVoice) {
+                                utterance.voice = englishFemaleVoice;
+                            }
+                            window.speechSynthesis.speak(utterance);
+                        };
+                        tdExample.appendChild(exSpeakBtn);
+                    }
+
                     // 出處欄位
                     let tdLesson = document.createElement('td');
                     tdLesson.style.cssText = 'border: 1px solid #e0e0e0; padding: 14px;';
@@ -6239,6 +6317,7 @@
                     tr.appendChild(tdCheck);
                     tr.appendChild(tdWord);
                     tr.appendChild(tdZh);
+                    tr.appendChild(tdExample);
                     tr.appendChild(tdLesson);
                     tr.appendChild(tdAction);
                     tbody.appendChild(tr);
